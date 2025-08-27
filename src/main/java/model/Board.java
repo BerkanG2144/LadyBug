@@ -193,55 +193,68 @@ public class Board {
         return front != null && getCell(front) == 'o';
     }
 
-    private boolean hasPath(Position start, Position end) {
-        if (start.equals(end)) {
-            return true;
-        }
-        if (getCell(end) != '.') {
-            return false;
-        }
+    private boolean hasPath(Position start, Position end, boolean allowNonEmptyStart) {
+        // Endziel MUSS leer sein (Absicherung – wichtig, falls jemand direkt hasPath aufruft)
+        if (getCell(end) != '.') return false;
 
-        Set<Position> visited = new HashSet<>();
-        Queue<Position> queue = new LinkedList<>();
-        queue.add(start);
-        visited.add(start);
+        // Start == End nur dann true, wenn End tatsächlich leer ist (oben geprüft)
+        if (start.equals(end)) return true;
 
-        while (!queue.isEmpty()) {
-            Position curr = queue.poll();
+        // Wenn Start nicht leer sein darf (between-Fall), sofort prüfen
+        if (!allowNonEmptyStart && getCell(start) != '.') return false;
 
-            for (Direction dir : Direction.values()) {
-                int nx = curr.x() + dir.getDx();
-                int ny = curr.y() + dir.getDy();
-                if (nx >= 1 && nx <= width && ny >= 1 && ny <= height) {
-                    Position next = new Position(nx, ny);
-                    if (!visited.contains(next) && getCell(next) == '.') {
-                        if (next.equals(end)) {
-                            return true;
-                        }
-                        visited.add(next);
-                        queue.add(next);
-                    }
-                }
+        // BFS über 4er-Nachbarschaft nur auf '.'-Zellen
+        boolean[][] visited = new boolean[height][width];
+        ArrayDeque<Position> q = new ArrayDeque<>();
+        q.add(start);
+        visited[start.y() - 1][start.x() - 1] = true;
+
+        // 4 Richtungen (N, S, W, O)
+        int[] dx = { 0,  0, -1, 1};
+        int[] dy = {-1,  1,  0, 0};
+
+        while (!q.isEmpty()) {
+            Position cur = q.pollFirst();
+
+            for (int i = 0; i < 4; i++) {
+                int nx = cur.x() + dx[i];
+                int ny = cur.y() + dy[i];
+                if (nx < 1 || nx > width || ny < 1 || ny > height) continue;
+
+                if (visited[ny - 1][nx - 1]) continue;
+
+                Position nxt = new Position(nx, ny);
+
+                // nur leere Zellen betreten
+                if (getCell(nxt) != '.') continue;
+
+                if (nxt.equals(end)) return true;
+
+                visited[ny - 1][nx - 1] = true;
+                q.addLast(nxt);
             }
         }
         return false;
     }
 
+    // --- A.4.1.5: vom Käfer zur Zielzelle (Start darf Nicht-'.' sein, Ziel MUSS '.') ---
     public boolean existsPath(Ladybug ladybug, int x, int y) {
-        Position target = new Position(x, y);
-        if (!isValidPosition(target)) {
-            return false;
-        }
-        return hasPath(ladybug.getPosition(), target);
+        Position start = ladybug.getPosition();
+        Position end = new Position(x, y);
+        if (!isValidPosition(end)) return false;
+        // Ziel MUSS leer sein
+        if (getCell(end) != '.') return false;
+        return hasPath(start, end, /*allowNonEmptyStart=*/true);
     }
 
+    // --- A.4.1.6: zwischen zwei Koordinaten (Start MUSS '.' sein, Ziel MUSS '.') ---
     public boolean existsPath(int x1, int y1, int x2, int y2) {
         Position start = new Position(x1, y1);
-        Position end = new Position(x2, y2);
-        if (!isValidPosition(start) || !isValidPosition(end)) {
-            return false;
-        }
-        return hasPath(start, end);
+        Position end   = new Position(x2, y2);
+        if (!isValidPosition(start) || !isValidPosition(end)) return false;
+        // Beide Endpunkte müssen leer sein (Pfad über leere Felder)
+        if (getCell(start) != '.' || getCell(end) != '.') return false;
+        return hasPath(start, end, /*allowNonEmptyStart=*/false);
     }
 
     // ================ Actions ================

@@ -1,10 +1,7 @@
 package commands;
 
 import model.Board;
-import model.Ladybug;
-import model.LadybugPosition;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;

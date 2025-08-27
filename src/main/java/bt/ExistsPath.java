@@ -1,0 +1,27 @@
+package bt;
+
+import model.Board;
+import model.Ladybug;
+
+public class ExistsPath implements NodeBehaviour {
+    private final int x;
+    private final int y;
+
+    /**
+     * Constructs an ExistsPath node with target coordinates.
+     * @param x The x-coordinate of the target position.
+     * @param y The y-coordinate of the target position.
+     */
+    public ExistsPath(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    @Override
+    public NodeStatus tick(Board board, Ladybug ladybug) {
+        if (board == null || ladybug == null) {
+            return NodeStatus.FAILURE;
+        }
+        return board.existsPath(ladybug, x, y) ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
+    }
+}

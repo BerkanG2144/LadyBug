@@ -1,8 +1,6 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class Board {
     private final char[][] grid;
@@ -37,6 +35,7 @@ public class Board {
             ladybugs.add(new Ladybug(id++, lp.getPosition(), lp.getDirection()));
         }
     }
+
 
     public char getCell(Position pos) {
         if (!isValidPosition(pos)) {
@@ -92,6 +91,9 @@ public class Board {
     public void addLadybug(Ladybug ladybug) {
         if (ladybug == null || !isValidPosition(ladybug.getPosition())) {
             throw new IllegalArgumentException("Error, invalid ladybug or position");
+        }
+        if (getLadybugById(ladybug.getId()).isPresent()) {
+            throw new IllegalArgumentException("Error, ladybug already");
         }
         if (getCell(ladybug.getPosition()) != '.') {
             throw new IllegalArgumentException("Error, position already occupied");
@@ -158,7 +160,7 @@ public class Board {
         System.out.println(border);
     }
 
-    // === Conditions, alle basie2rend auf getFrontPosition ===
+    // === Conditions, alle basierend auf getFrontPosition ===
     private Position getFrontPosition(Ladybug ladybug) {
         Direction dir = ladybug.getDirection();
         Position pos = ladybug.getPosition();
@@ -191,7 +193,58 @@ public class Board {
         return front != null && getCell(front) == 'o';
     }
 
-    // === Actions ===
+    private boolean hasPath(Position start, Position end) {
+        if (start.equals(end)) {
+            return true;
+        }
+        if (getCell(end) != '.') {
+            return false;
+        }
+
+        Set<Position> visited = new HashSet<>();
+        Queue<Position> queue = new LinkedList<>();
+        queue.add(start);
+        visited.add(start);
+
+        while (!queue.isEmpty()) {
+            Position curr = queue.poll();
+
+            for (Direction dir : Direction.values()) {
+                int nx = curr.x() + dir.getDx();
+                int ny = curr.y() + dir.getDy();
+                if (nx >= 1 && nx <= width && ny >= 1 && ny <= height) {
+                    Position next = new Position(nx, ny);
+                    if (!visited.contains(next) && getCell(next) == '.') {
+                        if (next.equals(end)) {
+                            return true;
+                        }
+                        visited.add(next);
+                        queue.add(next);
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean existsPath(Ladybug ladybug, int x, int y) {
+        Position target = new Position(x, y);
+        if (!isValidPosition(target)) {
+            return false;
+        }
+        return hasPath(ladybug.getPosition(), target);
+    }
+
+    public boolean existsPath(int x1, int y1, int x2, int y2) {
+        Position start = new Position(x1, y1);
+        Position end = new Position(x2, y2);
+        if (!isValidPosition(start) || !isValidPosition(end)) {
+            return false;
+        }
+        return hasPath(start, end);
+    }
+
+    // ================ Actions ================
     public boolean turnLeft(Ladybug ladybug) {
         Direction newDir = ladybug.getDirection().turnLeft();
         setLadybugDirection(ladybug, newDir);
@@ -271,7 +324,27 @@ public class Board {
         setCell(ladybug.getPosition(), newDir.toSymbol());
     }
 
-
     private void clearCell(Position p) { setCell(p, '.'); }
+
+    public List<Integer> listLadybugsIds() {
+        List<Integer> ids = new ArrayList<>();
+        for (Ladybug ladybug : ladybugs) {
+            ids.add(ladybug.getId());
+        }
+        ids.sort(Integer::compare);
+        return ids;
+    }
+
+    public Optional<Ladybug> getLadybugById(int id) {
+        if (id < 1) {
+            throw new IllegalArgumentException("Error, invalid ladybug ID");
+        }
+        for (Ladybug ladybug : ladybugs) {
+            if (ladybug.getId() == id) {
+                return Optional.of(ladybug);
+            }
+        }
+        return Optional.empty();
+    }
 
 }

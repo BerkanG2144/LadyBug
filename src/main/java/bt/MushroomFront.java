@@ -3,7 +3,7 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
-public class MushroomFront implements NodeBehaviour{
+public class MushroomFront implements NodeBehavior {
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) {
         if (board == null || ladybug == null) {

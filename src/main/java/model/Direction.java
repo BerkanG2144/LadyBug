@@ -58,11 +58,11 @@ public enum Direction {
     }
 
     public static Direction fromDelta(int dx, int dy) {
-        if (dx > 0) return RIGHT;
-        if (dx < 0) return LEFT;
-        if (dy > 0) return DOWN;
-        if (dy < 0) return UP;
-        throw new IllegalArgumentException("Error, no movement");
+        if (Math.abs(dx) >= Math.abs(dy)) {
+            return dx >= 0 ? RIGHT : LEFT;
+        } else {
+            return dy >= 0 ? DOWN : UP;
+        }
     }
 
 }

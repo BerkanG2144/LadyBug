@@ -4,7 +4,7 @@ import model.Board;
 import model.Ladybug;
 import model.Position;
 
-public class Fly implements NodeBehaviour {
+public class Fly implements NodeBehavior {
     private final int x;
     private final int y;
 
@@ -22,3 +22,4 @@ public class Fly implements NodeBehaviour {
         return board.flyTo(ladybug, target) ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
     }
 }
+

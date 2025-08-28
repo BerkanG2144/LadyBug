@@ -3,7 +3,7 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
-public class TreeFront implements NodeBehaviour{
+public class TreeFront implements NodeBehavior {
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) {
         if (board == null || ladybug == null) {

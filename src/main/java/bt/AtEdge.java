@@ -3,7 +3,7 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
-public class AtEdge implements NodeBehaviour{
+public class AtEdge implements NodeBehavior {
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) {
         if (board == null || ladybug == null) {

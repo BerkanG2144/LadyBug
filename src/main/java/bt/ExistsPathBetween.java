@@ -3,7 +3,7 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
-public class ExistsPathBetween implements NodeBehaviour {
+public class ExistsPathBetween implements NodeBehavior {
     private final int x1;
     private final int y1;
     private final int x2;

@@ -238,7 +238,7 @@ public class Board {
     }
 
     // --- A.4.1.5: vom Käfer zur Zielzelle (Start darf Nicht-'.' sein, Ziel MUSS '.') ---
-    public boolean existsPath(Ladybug ladybug, int x, int y) {
+    public boolean existsPath(Ladybug ladybug, int x, int y)   {
         Position start = ladybug.getPosition();
         Position end = new Position(x, y);
         if (!isValidPosition(end)) return false;
@@ -318,7 +318,8 @@ public class Board {
     }
 
     public boolean flyTo(Ladybug ladybug, Position target) {
-        if (target.x() < 1 || target.x() > width || target.y() < 1 || target.y() > height) return false;
+        if (target.x() < 1 || target.x() > width || target.y() < 1 ||
+                target.y() > height || getCell(target) != '.') return false;
 
         Position current = ladybug.getPosition();
         int dx = Integer.compare(target.x() - current.x(), 0);

@@ -3,7 +3,7 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
-public class PlaceLeaf implements NodeBehaviour {
+public class PlaceLeaf implements NodeBehavior {
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) {
         if (board == null || ladybug == null) {

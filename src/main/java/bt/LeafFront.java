@@ -4,7 +4,7 @@ import model.Board;
 import model.Ladybug;
 
 
-public class LeafFront implements NodeBehaviour {
+public class LeafFront implements NodeBehavior {
 
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) {

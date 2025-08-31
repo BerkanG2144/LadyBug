@@ -19,9 +19,9 @@ public class ParallelNodeTest {
         TestBehavior b3 = new TestBehavior(NodeStatus.SUCCESS);
 
         ParallelNode par = new ParallelNode("par", 2);
-        par.addChildren(new LeafNode("n1", b1, LeafNode.LeafKind.ACTION));
-        par.addChildren(new LeafNode("n2", b2, LeafNode.LeafKind.ACTION));
-        par.addChildren(new LeafNode("n3", b3, LeafNode.LeafKind.ACTION));
+        par.addChild(new LeafNode("n1", b1, LeafNode.LeafKind.ACTION));
+        par.addChild(new LeafNode("n2", b2, LeafNode.LeafKind.ACTION));
+        par.addChild(new LeafNode("n3", b3, LeafNode.LeafKind.ACTION));
 
         assertEquals(NodeStatus.SUCCESS, par.tick(null, null));
         // should evaluate all children (current implementation counts all)
@@ -36,8 +36,8 @@ public class ParallelNodeTest {
         TestBehavior b2 = new TestBehavior(NodeStatus.FAILURE);
 
         ParallelNode par = new ParallelNode("par", 1);
-        par.addChildren(new LeafNode("n1", b1, LeafNode.LeafKind.ACTION));
-        par.addChildren(new LeafNode("n2", b2, LeafNode.LeafKind.ACTION));
+        par.addChild(new LeafNode("n1", b1, LeafNode.LeafKind.ACTION));
+        par.addChild(new LeafNode("n2", b2, LeafNode.LeafKind.ACTION));
 
         assertEquals(NodeStatus.FAILURE, par.tick(null, null));
         assertEquals(1, b1.calls);

@@ -32,8 +32,8 @@ public class BehaviorTreeNodeCoreTest {
         SequenceNode seq = new SequenceNode("S");
         LeafNode a = new LeafNode("A", new TestBehavior(NodeStatus.SUCCESS), LeafNode.LeafKind.ACTION);
         LeafNode b = new LeafNode("B", new TestBehavior(NodeStatus.SUCCESS), LeafNode.LeafKind.ACTION);
-        seq.addChildren(a);
-        seq.addChildren(b);
+        seq.addChild(a);
+        seq.addChild(b);
 
         // order
         List<BehaviorTreeNode> children = seq.getChildren();

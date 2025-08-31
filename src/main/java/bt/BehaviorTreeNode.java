@@ -19,7 +19,7 @@ public abstract class BehaviorTreeNode {
         return id;
     }
 
-    public void addChildren(BehaviorTreeNode child) {
+    public void addChild(BehaviorTreeNode child) {
         children.add(child);
     }
 

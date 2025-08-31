@@ -3,9 +3,20 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
-public class FallbackNode extends BehaviorTreeNode {
+import java.util.List;
+
+public class FallbackNode extends BehaviorTreeNode implements CompositeNode{
     public FallbackNode(String id) {
         super(id);
+    }
+
+    @Override
+    public void addChild(BehaviorTreeNode child) {
+        children.add(child);
+    }
+
+    public List<BehaviorTreeNode> getChildren() {
+        return children;
     }
 
     @Override

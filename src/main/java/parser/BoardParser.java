@@ -1,4 +1,4 @@
-package commands;
+package parser;
 
 import model.Board;
 

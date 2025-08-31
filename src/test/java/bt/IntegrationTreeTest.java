@@ -23,13 +23,13 @@ public class IntegrationTreeTest {
         TestBehavior seq2  = new TestBehavior(NodeStatus.SUCCESS);
 
         FallbackNode root = new FallbackNode("root");
-        root.addChildren(new LeafNode("fail-first", first, LeafNode.LeafKind.CONDITION));
+        root.addChild(new LeafNode("fail-first", first, LeafNode.LeafKind.CONDITION));
 
         SequenceNode seq = new SequenceNode("seq");
-        seq.addChildren(new LeafNode("s1", seq1, LeafNode.LeafKind.CONDITION));
-        seq.addChildren(new LeafNode("s2", seq2, LeafNode.LeafKind.ACTION));
+        seq.addChild(new LeafNode("s1", seq1, LeafNode.LeafKind.CONDITION));
+        seq.addChild(new LeafNode("s2", seq2, LeafNode.LeafKind.ACTION));
 
-        root.addChildren(seq);
+        root.addChild(seq);
 
         assertEquals(NodeStatus.SUCCESS, root.tick(null, null));
         assertEquals(1, first.calls); // evaluated

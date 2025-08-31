@@ -3,12 +3,23 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
-public class ParallelNode extends BehaviorTreeNode {
+import java.util.List;
+
+public class ParallelNode extends BehaviorTreeNode implements CompositeNode {
     private final int requiredSuccesses;
 
     public ParallelNode(String id, int requiredSuccesses) {
         super(id);
         this.requiredSuccesses = requiredSuccesses;
+    }
+
+    @Override
+    public void addChild(BehaviorTreeNode child) {
+        children.add(child);
+    }
+
+    public List<BehaviorTreeNode> getChildren() {
+        return children;
     }
 
     @Override

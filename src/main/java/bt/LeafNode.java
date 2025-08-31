@@ -40,4 +40,13 @@ public class LeafNode extends BehaviorTreeNode{
         return behavior;
     }
 
+    public boolean isAction() {
+        return kind == LeafKind.ACTION;
+    }
+
+    public boolean isCondition() {
+        return kind == LeafKind.CONDITION;
+    }
+
+
 }

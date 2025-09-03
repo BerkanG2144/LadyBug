@@ -12,7 +12,7 @@ public class BoardParser {
 
     private static final Set<Character> VALID_SYMBOLS = Set.of('.', '#', '*', 'o', '^', '>', 'v', '<');
 
-    public Board parse (String path) throws IOException {
+    public static Board parse(String path) throws IOException {
         if (path == null || path.trim().isEmpty()) {
             throw new IllegalArgumentException("Error, file path cannot be null or empty");
         }

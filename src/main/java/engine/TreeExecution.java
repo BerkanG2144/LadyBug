@@ -30,30 +30,26 @@ public class TreeExecution {
         if (action == null) return false;
 
         LeafNode leaf = (LeafNode) action;
-        // ENTRY-Log für die Action
         log.accept(agent.getId() + " " + leaf.getId() + " ENTRY");
-
-        NodeStatus result = leaf.getBehavior().tick(board, agent);
-
-        // Ergebnis loggen + im State merken
+        NodeStatus result = leaf.getBehavior().tick(board, agent); // hier Action ausführen
         log.accept(agent.getId() + " " + leaf.getId() + " " + result);
-        state.getStatusCache().put(leaf.getId(), result);
 
-        // Simple Strategie: Cache nach Action leeren -> frische Traversal im nächsten Tick
-        state.getStatusCache().clear();
+        state.getStatusCache().clear(); // frisch evaluieren im nächsten Tick
         return true;
     }
+
 
     private BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent, ExecuteState state) {
         log.accept(agent.getId() + " " + node.getType() + " ENTRY ");
 
         if (node instanceof LeafNode leaf) {
-            NodeStatus result = leaf.getBehavior().tick(board, agent);
-            log.accept(agent.getId() + " " + node.getType() + " " + result);
             if (leaf.isCondition()) {
-                return result == NodeStatus.SUCCESS ? null : null;
+                NodeStatus result = leaf.getBehavior().tick(board, agent); // nur prüfen
+                log.accept(agent.getId() + " " + leaf.getId() + " " + result);
+                state.getStatusCache().put(leaf.getId(), result);
+                return null;  // keine Action zurückgeben
             } else {
-                return leaf;
+                return leaf;  // Action nur zurückgeben, Ausführung erst in tick()
             }
         }
 
@@ -61,13 +57,14 @@ public class TreeExecution {
             for (BehaviorTreeNode child : seq.getChildren()) {
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
                 if (next != null) return next;
-                NodeStatus res = state.getStatusCache().getOrDefault(child.getType(), NodeStatus.SUCCESS);
+                NodeStatus res = state.getStatusCache()
+                        .getOrDefault(child.getId(), NodeStatus.SUCCESS);  // <-- nicht getType()!
                 if (res == NodeStatus.FAILURE) {
-                    log.accept(agent.getId() + " " + node.getType() + "FAILURE");
+                    log.accept(agent.getId() + " " + node.getId() + " FAILURE");
                     return null;
                 }
             }
-            log.accept(agent.getId() + " " + node.getType() + "SUCCESS");
+            log.accept(agent.getId() + " " + node.getId() + "SUCCESS");
             return null;
         }
 
@@ -75,13 +72,14 @@ public class TreeExecution {
             for (BehaviorTreeNode child : fb.getChildren()) {
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
                 if (next != null) return next;
-                NodeStatus res = state.getStatusCache().getOrDefault(child.getType(), NodeStatus.FAILURE);
+                NodeStatus res = state.getStatusCache()
+                        .getOrDefault(child.getId(), NodeStatus.FAILURE);  // <-- nicht getType()!
                 if (res == NodeStatus.SUCCESS) {
-                    log.accept(agent.getId() + " " + node.getType() + "SUCCESS" );
+                    log.accept(agent.getId() + " " + node.getId() + " SUCCESS");
                     return null;
                 }
             }
-            log.accept(agent.getId() + " " + node.getType() + "FAILURE");
+            log.accept(agent.getId() + " " + node.getId() + "FAILURE");
             return null;
         }
 
@@ -91,13 +89,13 @@ public class TreeExecution {
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
                 if (next != null) return next;
                 NodeStatus res = state.getStatusCache()
-                        .getOrDefault(child.getType(), NodeStatus.FAILURE);
+                        .getOrDefault(child.getId(), NodeStatus.FAILURE);
                 if (res == NodeStatus.SUCCESS) successCount++;
             }
             if (successCount >= par.getRequiredSuccesses()) {
-                log.accept(agent.getId() + " " + node.getType() + " SUCCESS");
+                log.accept(agent.getId() + " " + node.getId() + " SUCCESS");
             } else {
-                log.accept(agent.getId() + " " + node.getType() + " FAILURE");
+                log.accept(agent.getId() + " " + node.getId() + " FAILURE");
             }
             return null;
         }

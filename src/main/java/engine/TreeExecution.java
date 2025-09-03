@@ -38,7 +38,6 @@ public class TreeExecution {
         return true;
     }
 
-
     private BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent, ExecuteState state) {
         log.accept(agent.getId() + " " + node.getType() + " ENTRY ");
 

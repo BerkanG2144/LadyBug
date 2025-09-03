@@ -3,23 +3,10 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SequenceNode extends BehaviorTreeNode implements CompositeNode {
-    private final List<BehaviorTreeNode> children = new ArrayList<>();
 
     public SequenceNode(String id) {
         super(id);
-    }
-
-    @Override
-    public void addChild(BehaviorTreeNode child) {
-        children.add(child);
-    }
-
-    public List<BehaviorTreeNode> getChildren() {
-        return children;
     }
 
     @Override

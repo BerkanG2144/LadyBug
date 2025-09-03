@@ -36,7 +36,6 @@ public class Board {
         }
     }
 
-
     public char getCell(Position pos) {
         if (!isValidPosition(pos)) {
             throw new IllegalArgumentException("Error, invalid position: " + pos);

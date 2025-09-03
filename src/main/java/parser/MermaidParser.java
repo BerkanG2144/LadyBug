@@ -2,6 +2,9 @@ package parser;
 
 import bt.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -246,5 +249,9 @@ public class MermaidParser {
         throw new IllegalArgumentException("Invalid node token: '" + token + "'");
     }
 
+    public static BehaviorTreeNode fromFile(String path) throws IOException {
+        String content = Files.readString(Path.of(path));
+        return new MermaidParser().parse(content);
+    }
 
 }

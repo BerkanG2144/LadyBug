@@ -13,7 +13,20 @@ public class Board {
         this.pathFinder = new PathFinder(grid);
     }
 
-    //Grid operations
+    // === Component access methods (für GameState) ===
+    public BoardGrid getGrid() {
+        return grid;
+    }
+
+    public LadybugManager getLadybugManager() {
+        return ladybugManager;
+    }
+
+    public PathFinder getPathFinder() {
+        return pathFinder;
+    }
+
+    // === Grid operations ===
     public char getCell(Position pos) {
         return grid.getCell(pos);
     }
@@ -26,16 +39,33 @@ public class Board {
         grid.print();
     }
 
-    //Methods for Ladybug
+    // === Ladybug operations (Delegation) ===
     public void addLadybug(Ladybug ladybug) {
         ladybugManager.addLadybug(ladybug);
+    }
+
+    public Optional<Ladybug> getLadybugById(int id) {
+        return ladybugManager.getLadybugById(id);
+    }
+
+    public List<Integer> listLadybugsIds() {
+        return ladybugManager.listLadybugsIds();
     }
 
     public List<LadybugPosition> getLadybugList() {
         return ladybugManager.getLadybugList();
     }
 
-    // === Conditions, alle basierend auf getFrontPosition ===
+    // === Pathfinding operations (Delegation) ===
+    public boolean existsPath(Ladybug ladybug, int x, int y) {
+        return pathFinder.existsPath(ladybug, x, y);
+    }
+
+    public boolean existsPath(int x1, int y1, int x2, int y2) {
+        return pathFinder.existsPath(x1, y1, x2, y2);
+    }
+
+    // === Conditions ===
     public boolean atEdge(Ladybug ladybug) {
         return getFrontPosition(ladybug) == null;
     }
@@ -55,24 +85,16 @@ public class Board {
         return front != null && getCell(front) == 'o';
     }
 
-    public boolean existsPath(Ladybug ladybug, int x, int y) {
-        return pathFinder.existsPath(ladybug, x, y);
-    }
-
-    public boolean existsPath(int x1, int y1, int x2, int y2) {
-        return pathFinder.existsPath(x1, y1, x2, y2);
-    }
-
-    // ================ Actions ================
+    // === Actions ===
     public boolean turnLeft(Ladybug ladybug) {
         Direction newDir = ladybug.getDirection().turnLeft();
-        setLadybugDirection(ladybug, newDir);
+        ladybugManager.setLadybugDirection(ladybug, newDir);
         return true;
     }
 
     public boolean turnRight(Ladybug ladybug) {
         Direction newDir = ladybug.getDirection().turnRight();
-        setLadybugDirection(ladybug, newDir);
+        ladybugManager.setLadybugDirection(ladybug, newDir);
         return true;
     }
 
@@ -82,13 +104,17 @@ public class Board {
         }
 
         Position front = getFrontPosition(ladybug);
-        if (getCell(front) != '.') return false;
+        if (getCell(front) != '.') {
+            return false;
+        }
         setCell(front, '*');
         return true;
     }
 
     public boolean takeLeaf(Ladybug ladybug) {
-        if (atEdge(ladybug) || !leafFront(ladybug)) return false;
+        if (atEdge(ladybug) || !leafFront(ladybug)) {
+            return false;
+        }
 
         Position front = getFrontPosition(ladybug);
         setCell(front, '.');
@@ -139,11 +165,7 @@ public class Board {
         return true;
     }
 
-    private void setLadybugDirection(Ladybug ladybug, Direction newDir) {
-        ladybug.setDirection(newDir);;
-        setCell(ladybug.getPosition(), newDir.toSymbol());
-    }
-
+    // === Helper methods ===
     private Position getFrontPosition(Ladybug ladybug) {
         Direction dir = ladybug.getDirection();
         Position pos = ladybug.getPosition();
@@ -165,9 +187,9 @@ public class Board {
         return grid.isValidPosition(behind) ? behind : null;
     }
 
+    // === Backwards compatibility ===
     @Deprecated
     public List<LadybugPosition> getLadybugsFromGrid() {
         return getLadybugList();
     }
-
 }

@@ -2,7 +2,6 @@ package commands;
 
 import main.GameState;
 import model.Board;
-
 import java.util.List;
 
 public class PrintPositionCommand implements Command {

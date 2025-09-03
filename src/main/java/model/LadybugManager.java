@@ -1,10 +1,11 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+/**
+ * Manages ladybugs on the board.
+ * @author u-Kürzel
+ */
 public class LadybugManager {
     private final List<Ladybug> ladybugs;
     private final BoardGrid grid;
@@ -12,8 +13,14 @@ public class LadybugManager {
     public LadybugManager(BoardGrid grid) {
         this.grid = grid;
         this.ladybugs = new ArrayList<>();
+        initializeLadybugsFromGrid();
     }
 
+    /**
+     * Adds a ladybug to the manager.
+     * @param ladybug the ladybug to add
+     * @throws IllegalArgumentException if ladybug is invalid or position occupied
+     */
     public void addLadybug(Ladybug ladybug) {
         if (ladybug == null || !grid.isValidPosition(ladybug.getPosition())) {
             throw new IllegalArgumentException("Error, invalid ladybug or position");
@@ -28,17 +35,36 @@ public class LadybugManager {
         grid.setCell(ladybug.getPosition(), ladybug.getDirection().toSymbol());
     }
 
+    /**
+     * Gets a ladybug by its ID.
+     * @param id the ladybug ID
+     * @return Optional containing the ladybug if found
+     * @throws IllegalArgumentException if ID is invalid
+     */
     public Optional<Ladybug> getLadybugById(int id) {
         if (id < 1) {
             throw new IllegalArgumentException("Error, invalid ladybug ID");
         }
-        return ladybugs.stream().filter(lb -> lb.getId() == id).findFirst();
+        return ladybugs.stream()
+                .filter(lb -> lb.getId() == id)
+                .findFirst();
     }
 
-    public List<Integer> listLadyBugsIds() {
-        return ladybugs.stream().map(Ladybug::getId).sorted().toList();
+    /**
+     * Gets all ladybug IDs sorted.
+     * @return list of sorted IDs
+     */
+    public List<Integer> listLadybugsIds() {
+        return ladybugs.stream()
+                .map(Ladybug::getId)
+                .sorted()
+                .toList();
     }
 
+    /**
+     * Gets all ladybug positions sorted by position.
+     * @return list of ladybug positions
+     */
     public List<LadybugPosition> getLadybugList() {
         return ladybugs.stream()
                 .map(lb -> new LadybugPosition(lb.getPosition(), lb.getDirection()))
@@ -47,6 +73,13 @@ public class LadybugManager {
                 .toList();
     }
 
+    /**
+     * Moves a ladybug to an empty position.
+     * @param ladybug the ladybug to move
+     * @param newPosition the target position
+     * @param newDirection the new direction
+     * @throws IllegalArgumentException if move is invalid
+     */
     public void moveLadybugToEmpty(Ladybug ladybug, Position newPosition, Direction newDirection) {
         validateLadybugMove(ladybug, newPosition);
         if (grid.getCell(newPosition) != '.') {
@@ -55,6 +88,13 @@ public class LadybugManager {
         performMove(ladybug, newPosition, newDirection);
     }
 
+    /**
+     * Moves a ladybug to a mushroom position (replaces the mushroom).
+     * @param ladybug the ladybug to move
+     * @param mushroomPos the mushroom position
+     * @param newDirection the new direction
+     * @throws IllegalArgumentException if move is invalid
+     */
     public void moveLadybugToMushroom(Ladybug ladybug, Position mushroomPos, Direction newDirection) {
         validateLadybugMove(ladybug, mushroomPos);
         if (grid.getCell(mushroomPos) != 'o') {
@@ -63,6 +103,11 @@ public class LadybugManager {
         performMove(ladybug, mushroomPos, newDirection);
     }
 
+    /**
+     * Sets the direction of a ladybug and updates the grid.
+     * @param ladybug the ladybug
+     * @param newDirection the new direction
+     */
     public void setLadybugDirection(Ladybug ladybug, Direction newDirection) {
         ladybug.setDirection(newDirection);
         grid.setCell(ladybug.getPosition(), newDirection.toSymbol());

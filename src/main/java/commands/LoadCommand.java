@@ -10,6 +10,7 @@ import parser.MermaidParser;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLOutput;
 import java.util.List;
 
 public class LoadCommand implements Command {
@@ -32,9 +33,11 @@ public class LoadCommand implements Command {
                 if (!Files.exists(p)) {
                     throw new IllegalArgumentException("Board-Datei nicht gefunden: " + p);
                 }
+                String content = Files.readString(p);
+                System.out.println(content);
+
                 Board board = BoardParser.parse(p.toString());
                 state.setBoard(board);
-                System.out.println("Board geladen: " + p.toAbsolutePath());
                 break;
             }
             case "trees": {
@@ -51,7 +54,6 @@ public class LoadCommand implements Command {
                 List<LadybugPosition> allLadybugPositions = state.getBoard().getLadybugList();
 
                 state.clearTrees();
-
                 state.getBoard().getLadybugManager().clearAllLadybugs();
 
                 // Lade jeden Baum sukzessive

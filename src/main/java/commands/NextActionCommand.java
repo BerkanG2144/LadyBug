@@ -15,7 +15,7 @@ public class NextActionCommand extends AbstractCommand{
 
     @Override
     protected void executeInternal(String[] args) throws Exception {
-        if (args.length != 0) {
+        if (args.length != 1 || !"action".equals(args[0])) {
             throw new IllegalArgumentException("Usage: next action");
         }
 

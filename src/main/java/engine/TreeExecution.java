@@ -65,8 +65,10 @@ public class TreeExecution {
         }
 
         LeafNode leaf = (LeafNode) action;
-        log.accept(agent.getId() + " " + leaf.getId() + " ENTRY");
         NodeStatus result = leaf.getBehavior().tick(board, agent);
+
+        String actionName = getLeafBehaviorName(leaf);
+        log.accept(agent.getId() + " " + leaf.getId() + " " + actionName + " ENTRY");
         log.accept(agent.getId() + " " + leaf.getId() + " " + result);
 
         // Nach Action: bereite nächsten Zustand vor
@@ -84,12 +86,16 @@ public class TreeExecution {
     }
 
     private BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent, ExecuteState state) {
-        log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " ENTRY");
+        if (!(node instanceof LeafNode)) {
+            log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " ENTRY");
+        }
 
         if (node instanceof LeafNode leaf) {
             if (leaf.isCondition()) {
                 NodeStatus result = leaf.getBehavior().tick(board, agent);
-                log.accept(agent.getId() + " " + leaf.getId() + " " + result);
+
+                String conditionName = getLeafBehaviorName(leaf);
+                log.accept(agent.getId() + " " + leaf.getId() + " " + conditionName);
                 state.getStatusCache().put(leaf.getId(), result);
                 return null;
             } else {
@@ -145,6 +151,15 @@ public class TreeExecution {
         }
 
         return null;
+    }
+
+    private String getLeafBehaviorName(LeafNode leaf) {
+        String className = leaf.getBehavior().getClass().getSimpleName();
+
+        if (className.length() > 0) {
+            return Character.toLowerCase(className.charAt(0)) + className.substring(1);
+        }
+        return className;
     }
 
     public void reset(Ladybug agent) {

@@ -155,4 +155,18 @@ public class LadybugManager {
         ladybug.setDirection(newDirection);
         grid.setCell(newPosition, newDirection.toSymbol());
     }
+
+    public void clearAllLadybugs() {
+        // Entferne alle Marienkäfer-Symbole vom Grid und setze auf '.' zurück
+        for (Ladybug ladybug : ladybugs) {
+            grid.setCell(ladybug.getPosition(), '.');
+        }
+
+        // Lösche alle Marienkäfer aus der Liste
+        ladybugs.clear();
+
+        // Lade die ursprünglichen Marienkäfer-Positionen vom Grid neu
+        // (aber erstelle noch keine Ladybug-Objekte)
+        // Das wird später im LoadCommand gemacht
+    }
 }

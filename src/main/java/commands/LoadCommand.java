@@ -3,6 +3,8 @@ package commands;
 import bt.BehaviorTreeNode;
 import main.GameState;
 import model.Board;
+import model.Ladybug;
+import model.LadybugPosition;
 import parser.BoardParser;
 import parser.MermaidParser;
 
@@ -45,14 +47,12 @@ public class LoadCommand implements Command {
                 String[] treePaths = new String[args.length - 1];
                 System.arraycopy(args, 1, treePaths, 0, args.length - 1);
 
-                // Prüfe ob genug Marienkäfer vorhanden sind
-                List<Integer> ladybugIds = state.getBoard().listLadybugsIds();
-                if (treePaths.length > ladybugIds.size()) {
-                    throw new IllegalArgumentException("Error: more trees than ladybugs on board");
-                }
+                //hole alle verfügbaren pos
+                List<LadybugPosition> allLadybugPositions = state.getBoard().getLadybugList();
 
-                // Lösche vorherige Trees
                 state.clearTrees();
+
+                state.getBoard().getLadybugManager().clearAllLadybugs();
 
                 // Lade jeden Baum sukzessive
                 for (int i = 0; i < treePaths.length; i++) {
@@ -74,9 +74,11 @@ public class LoadCommand implements Command {
                             throw new IllegalArgumentException("Error: behavior tree must contain at least one action");
                         }
 
-                        // Marienkäfer-ID ist i+1 (beginnend bei 1)
-                        int ladybugId = i + 1;
-                        state.addTree(ladybugId, tree);
+                        LadybugPosition position = allLadybugPositions.get(i);
+                        Ladybug ladybug = new Ladybug(i + 1, position.getPosition(), position.getDirection());
+                        state.getBoard().addLadybug(ladybug);
+
+                        state.addTree(i + 1, tree);
 
                     } catch (Exception e) {
                         throw new IllegalArgumentException("Error parsing tree file " + treePath + ": " + e.getMessage());

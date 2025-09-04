@@ -23,6 +23,7 @@ public class GameController {
         commands.put("print", new PrintPositionCommand(gameState));
         commands.put("reset", new ResetTreeCommand(gameState));
         commands.put("head", new HeadCommand(gameState));
+        commands.put("next", new NextActionCommand(gameState));
     }
 
     public void run() {

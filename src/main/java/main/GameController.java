@@ -34,8 +34,8 @@ public class GameController {
             if (line.isEmpty()) continue;
 
             String[] parts = line.split("\\s+");
-            String name = parts[0].toLowerCase();
-            String[] args = new String[Math.max(0, parts.length - 1)];
+            String name = parts[0].toLowerCase(); //load ...
+            String[] args = new String[Math.max(0, parts.length - 1)]; //alles ab load
             if (args.length > 0) System.arraycopy(parts, 1, args, 0, args.length);
 
             Command cmd = commands.get(name);

@@ -10,6 +10,8 @@ public class ExecuteState {
     private BehaviorTreeNode currentNode;
     private final Map<String, NodeStatus> statusCache = new HashMap<>();
 
+    private BehaviorTreeNode rootNode;
+
     public BehaviorTreeNode getCurrentNode() {
         return currentNode;
     }
@@ -18,12 +20,46 @@ public class ExecuteState {
         this.currentNode = currentNode;
     }
 
+    public BehaviorTreeNode getRootNode() {
+        return rootNode;
+    }
+
     public Map<String, NodeStatus> getStatusCache() {
         return statusCache;
+    }
+
+    public void setRootNode(BehaviorTreeNode rootNode) {
+        this.rootNode = rootNode;
+
+        if (this.currentNode == null) {
+            this.currentNode = rootNode;
+        }
     }
 
     public void reset() {
         currentNode = null;
         statusCache.clear();
     }
+
+    public BehaviorTreeNode findNodeById(String nodeId) {
+        if (rootNode == null) {
+            return null;
+        }
+        return findNodeByIdRecursive(rootNode, nodeId);
+    }
+
+    private BehaviorTreeNode findNodeByIdRecursive(BehaviorTreeNode node, String nodeId) {
+        if (node.getId().equals(nodeId)) {
+            return node;
+        }
+
+        for (BehaviorTreeNode child : node.getChildren()) {
+            BehaviorTreeNode found = findNodeByIdRecursive(child, nodeId);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
 }

@@ -21,34 +21,79 @@ public class TreeExecution {
     }
 
     private ExecuteState stateOf(Ladybug agent) {
-        return states.computeIfAbsent(agent, k -> new ExecuteState());
+        ExecuteState state = states.computeIfAbsent(agent, k -> new ExecuteState());
+
+        if (state.getRootNode() == null) {
+            state.setRootNode(root);
+        }
+        return state;
+    }
+
+    public BehaviorTreeNode getCurrentNode(Ladybug agent) {
+        ExecuteState state = stateOf(agent);
+        return state.getCurrentNode();
+    }
+
+    public boolean jumpTo(Ladybug agent, String nodeId) {
+        ExecuteState state = stateOf(agent);
+        BehaviorTreeNode targetNode = state.findNodeById(nodeId);
+
+        if (targetNode == null) {
+            return false;
+        }
+
+        state.setCurrentNode(targetNode);
+        state.getStatusCache().clear();
+        return true;
     }
 
     public boolean tick(Board board, Ladybug agent) {
         ExecuteState state = stateOf(agent);
-        BehaviorTreeNode action = findNextAction(root, board, agent, state);
-        if (action == null) return false;
+        BehaviorTreeNode currentNode = state.getCurrentNode();
+
+        if (currentNode == null) {
+            currentNode = root;
+            state.setCurrentNode(currentNode);
+        }
+
+        // Finde und führe nächste Action aus
+        BehaviorTreeNode action = findNextAction(currentNode, board, agent, state);
+        if (action == null) {
+            // Kein Action gefunden -> zurück zur Wurzel für nächsten Durchlauf
+            state.setCurrentNode(root);
+            return false;
+        }
 
         LeafNode leaf = (LeafNode) action;
         log.accept(agent.getId() + " " + leaf.getId() + " ENTRY");
-        NodeStatus result = leaf.getBehavior().tick(board, agent); // hier Action ausführen
+        NodeStatus result = leaf.getBehavior().tick(board, agent);
         log.accept(agent.getId() + " " + leaf.getId() + " " + result);
 
-        state.getStatusCache().clear(); // frisch evaluieren im nächsten Tick
+        // Nach Action: bereite nächsten Zustand vor
+        prepareNextState(state, action);
+
         return true;
     }
 
+    private void prepareNextState(ExecuteState state, BehaviorTreeNode executedAction) {
+        // Nach einer Action: gehe zurück zur Wurzel für nächsten Durchlauf
+        // (Das ist vereinfacht - in einer vollständigen Implementation würde man
+        // den Execution-Kontext beibehalten)
+        state.setCurrentNode(state.getRootNode());
+        state.getStatusCache().clear();
+    }
+
     private BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent, ExecuteState state) {
-        log.accept(agent.getId() + " " + node.getType() + " ENTRY ");
+        log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " ENTRY");
 
         if (node instanceof LeafNode leaf) {
             if (leaf.isCondition()) {
-                NodeStatus result = leaf.getBehavior().tick(board, agent); // nur prüfen
+                NodeStatus result = leaf.getBehavior().tick(board, agent);
                 log.accept(agent.getId() + " " + leaf.getId() + " " + result);
                 state.getStatusCache().put(leaf.getId(), result);
-                return null;  // keine Action zurückgeben
+                return null;
             } else {
-                return leaf;  // Action nur zurückgeben, Ausführung erst in tick()
+                return leaf; // Action gefunden
             }
         }
 
@@ -56,14 +101,14 @@ public class TreeExecution {
             for (BehaviorTreeNode child : seq.getChildren()) {
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
                 if (next != null) return next;
-                NodeStatus res = state.getStatusCache()
-                        .getOrDefault(child.getId(), NodeStatus.SUCCESS);  // <-- nicht getType()!
+
+                NodeStatus res = state.getStatusCache().getOrDefault(child.getId(), NodeStatus.SUCCESS);
                 if (res == NodeStatus.FAILURE) {
                     log.accept(agent.getId() + " " + node.getId() + " FAILURE");
                     return null;
                 }
             }
-            log.accept(agent.getId() + " " + node.getId() + "SUCCESS");
+            log.accept(agent.getId() + " " + node.getId() + " SUCCESS");
             return null;
         }
 
@@ -71,14 +116,14 @@ public class TreeExecution {
             for (BehaviorTreeNode child : fb.getChildren()) {
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
                 if (next != null) return next;
-                NodeStatus res = state.getStatusCache()
-                        .getOrDefault(child.getId(), NodeStatus.FAILURE);  // <-- nicht getType()!
+
+                NodeStatus res = state.getStatusCache().getOrDefault(child.getId(), NodeStatus.FAILURE);
                 if (res == NodeStatus.SUCCESS) {
                     log.accept(agent.getId() + " " + node.getId() + " SUCCESS");
                     return null;
                 }
             }
-            log.accept(agent.getId() + " " + node.getId() + "FAILURE");
+            log.accept(agent.getId() + " " + node.getId() + " FAILURE");
             return null;
         }
 

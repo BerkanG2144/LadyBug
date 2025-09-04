@@ -1,6 +1,4 @@
-// commands/ListLadybugsCommand.java
 package commands;
-
 import main.GameState;
 
 import java.util.List;

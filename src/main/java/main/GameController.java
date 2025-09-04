@@ -1,9 +1,6 @@
 package main;
 
-import commands.Command;
-import commands.ListLadybugsCommand;
-import commands.LoadCommand;
-import commands.PrintPositionCommand;
+import commands.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,6 +21,8 @@ public class GameController {
         commands.put("load", loadCommand);
         commands.put("list", new ListLadybugsCommand(gameState));
         commands.put("print", new PrintPositionCommand(gameState));
+        commands.put("reset", new ResetTreeCommand(gameState));
+        commands.put("head", new HeadCommand(gameState));
     }
 
     public void run() {

@@ -33,8 +33,6 @@ public class LoadCommand implements Command {
                 if (!Files.exists(p)) {
                     throw new IllegalArgumentException("Board-Datei nicht gefunden: " + p);
                 }
-                String content = Files.readString(p);
-                System.out.println(content);
 
                 Board board = BoardParser.parse(p.toString());
                 state.setBoard(board);
@@ -65,7 +63,8 @@ public class LoadCommand implements Command {
 
                     // Gib Inhalt verbatim aus (für Tests)
                     String content = Files.readString(treePath);
-                    System.out.print(content); // Ohne zusätzliche Newline
+                    System.out.println(content.trim());
+
 
                     // Parse den Baum
                     try {

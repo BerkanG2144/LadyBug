@@ -2,7 +2,11 @@ package commands;
 
 import main.GameState;
 import model.Board;
+import model.Ladybug;
+import model.Position;
+
 import java.util.List;
+import java.util.Optional;
 
 public class PrintPositionCommand implements Command {
     private final GameState state;
@@ -13,15 +17,26 @@ public class PrintPositionCommand implements Command {
 
     @Override
     public void execute(String[] args) throws Exception {
-        Board board = state.getBoard();
-        List<Integer> ids = board.listLadybugsIds();
+        if (args.length < 2) {
+            throw new IllegalArgumentException("Usage: print position <ladybug>");
+        }
 
-        if (ids.isEmpty()) {
-            System.out.println("Error: no ladybugs found");
+        Board board = state.getBoard();
+        if (board == null) {
+            System.out.println("Error: no board loaded");
             return;
         }
 
-        board.getLadybugsFromGrid();
+        int ladybugId = Integer.parseInt(args[1]);
+        Optional<Ladybug> ladybug = board.getLadybugById(ladybugId);
+
+        if (ladybug.isEmpty()) {
+            System.out.println("Error: ladybug not found");
+            return;
+        }
+
+        Position pos = ladybug.get().getPosition();
+        System.out.println("(" + pos.x() + ", " + pos.y() + ")");
     }
 
     @Override

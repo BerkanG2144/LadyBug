@@ -2,39 +2,27 @@
 package commands;
 
 import main.GameState;
-import model.Board;
-import model.LadybugManager;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class ListLadybugsCommand implements Command {
-    private final GameState state;
+public class ListLadybugsCommand extends AbstractCommand {
 
     public ListLadybugsCommand(GameState state) {
-        this.state = state;
+        super(state);
     }
 
     @Override
-    public void execute(String[] args) {
-        Board board = state.getBoard();
-        if (board == null) {
-            System.out.println("Error: no board loaded");
-            return;
-        }
+    protected void executeInternal(String[] args) throws Exception {
+        requireLadybugs(); // Validation aus AbstractCommand
 
-        List<Integer> ids = board.listLadybugsIds(); // Methode in Board, die IDs sammelt
-        if (ids.isEmpty()) {
-            System.out.println("Error: no ladybugs found");
-            return;
-        }
-
-        // IDs mit Leerzeichen getrennt in einer Zeile ausgeben
+        List<Integer> ids = getBoard().listLadybugsIds();
         String result = ids.stream()
                 .map(String::valueOf)
-                .reduce((a, b) -> a + " " + b)
-                .orElse("");
+                .collect(Collectors.joining(" "));
         System.out.println(result);
     }
+
 
     @Override
     public String getCommandName() {

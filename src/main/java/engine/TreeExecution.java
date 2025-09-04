@@ -65,10 +65,12 @@ public class TreeExecution {
         }
 
         LeafNode leaf = (LeafNode) action;
+        String actionName = getLeafBehaviorName(leaf);
+
+        log.accept(agent.getId() + " " + leaf.getId() + " " + actionName + " ENTRY");
+
         NodeStatus result = leaf.getBehavior().tick(board, agent);
 
-        String actionName = getLeafBehaviorName(leaf);
-        log.accept(agent.getId() + " " + leaf.getId() + " " + actionName + " ENTRY");
         log.accept(agent.getId() + " " + leaf.getId() + " " + result);
 
         // Nach Action: bereite nächsten Zustand vor
@@ -135,13 +137,24 @@ public class TreeExecution {
 
         if (node instanceof ParallelNode par) {
             int successCount = 0;
+            BehaviorTreeNode foundAction = null;
+
             for (BehaviorTreeNode child : par.getChildren()) {
-                BehaviorTreeNode next = findNextAction(child, board, agent, state);
-                if (next != null) return next;
-                NodeStatus res = state.getStatusCache()
-                        .getOrDefault(child.getId(), NodeStatus.FAILURE);
-                if (res == NodeStatus.SUCCESS) successCount++;
+                BehaviorTreeNode action = findNextAction(child, board, agent, state);
+                if (action != null && foundAction == null) {
+                    foundAction = action; // Erste gefundene Action merken
+                }
+
+                NodeStatus childStatus = state.getStatusCache().getOrDefault(child.getId(), NodeStatus.FAILURE);
+                if (childStatus == NodeStatus.SUCCESS) {
+                    successCount++;
+                }
             }
+
+            if (foundAction != null) {
+                return foundAction;
+            }
+
             if (successCount >= par.getRequiredSuccesses()) {
                 log.accept(agent.getId() + " " + node.getId() + " SUCCESS");
             } else {

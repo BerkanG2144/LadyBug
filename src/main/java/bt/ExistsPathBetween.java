@@ -3,6 +3,14 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
+/**
+ * Behavior tree node that checks whether a valid path exists
+ * between two specified coordinates on the board.
+ *
+ * Returns SUCCESS if a path exists, otherwise FAILURE.
+ *
+ * @author ujnaa
+ */
 public class ExistsPathBetween implements NodeBehavior {
     private final int x1;
     private final int y1;

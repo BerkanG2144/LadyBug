@@ -3,6 +3,14 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
+/**
+ * Behavior tree node that checks whether a valid path exists
+ * from the current ladybug position to a target coordinate.
+ *
+ * Returns SUCCESS if a path exists, otherwise FAILURE.
+ *
+ * @author ujnaa
+ */
 public class ExistsPath implements NodeBehavior {
     private final int x;
     private final int y;

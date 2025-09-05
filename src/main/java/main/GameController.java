@@ -24,6 +24,8 @@ public class GameController {
         commands.put("reset", new ResetTreeCommand(gameState));
         commands.put("head", new HeadCommand(gameState));
         commands.put("next", new NextActionCommand(gameState));
+        commands.put("add", new AddSiblingCommand(gameState));
+        commands.put("quit", new QuitCommand(gameState));
     }
 
     public void run() {
@@ -34,8 +36,8 @@ public class GameController {
             if (line.isEmpty()) continue;
 
             String[] parts = line.split("\\s+");
-            String name = parts[0].toLowerCase(); //load ...
-            String[] args = new String[Math.max(0, parts.length - 1)]; //alles ab load
+            String name = parts[0].toLowerCase();
+            String[] args = new String[Math.max(0, parts.length - 1)];
             if (args.length > 0) System.arraycopy(parts, 1, args, 0, args.length);
 
             Command cmd = commands.get(name);
@@ -45,6 +47,9 @@ public class GameController {
             }
             try {
                 cmd.execute(args);
+            } catch (QuitCommand.QuitException e) {
+                // Quit gracefully without System.exit()
+                break;
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
             }

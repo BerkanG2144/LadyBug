@@ -3,6 +3,14 @@ package bt;
 import model.Board;
 import model.Ladybug;
 
+/**
+ * Behavior tree node that turns the ladybug
+ * one step to the right.
+ *
+ * Always returns SUCCESS.
+ *
+ * @author ujnaa
+ */
 public class TurnRight implements NodeBehavior {
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) {

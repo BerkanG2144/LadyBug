@@ -12,6 +12,7 @@ public class ExecuteState {
     private BehaviorTreeNode currentNode;
     private final Map<String, NodeStatus> statusCache = new HashMap<>();
     private BehaviorTreeNode rootNode;
+    private BehaviorTreeNode lastExecutedLeaf;
 
     private final Map<String, Set<String>> parallelNodeProgress = new HashMap<>();
 
@@ -38,6 +39,14 @@ public class ExecuteState {
 
     public Map<String, NodeStatus> getStatusCache() {
         return statusCache;
+    }
+
+    public BehaviorTreeNode getLastExecutedLeaf() {
+        return lastExecutedLeaf;
+    }
+
+    public void setLastExecutedLeaf(BehaviorTreeNode lastExecutedLeaf) {
+        this.lastExecutedLeaf = lastExecutedLeaf;
     }
 
     public void setRootNode(BehaviorTreeNode rootNode) {

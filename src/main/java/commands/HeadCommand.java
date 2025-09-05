@@ -39,6 +39,12 @@ public class HeadCommand extends AbstractCommand {
             throw new IllegalStateException("Error: no tree loaded for ladybug " + ladybugId);
         }
 
+        var execState = execution.stateOf(ladybug.get());   // <-- public Getter in TreeExecution (siehe unten)
+        if (execState != null && execState.getLastExecutedLeaf() != null) {
+            System.out.println(execState.getLastExecutedLeaf().getId());
+            return;
+        }
+
         // Hole aktuellen Knoten (nutzt das erweiterte System)
         BehaviorTreeNode currentNode = execution.getCurrentNode(ladybug.get());
 

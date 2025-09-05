@@ -21,7 +21,7 @@ public class TreeExecution {
         this.log = log != null ? log : s -> {};
     }
 
-    private ExecuteState stateOf(Ladybug agent) {
+    public ExecuteState stateOf(Ladybug agent) {
         ExecuteState state = states.computeIfAbsent(agent, k -> new ExecuteState());
 
         if (state.getRootNode() == null) {
@@ -80,6 +80,7 @@ public class TreeExecution {
         String actionName = getLeafBehaviorName(leaf);
         NodeStatus result = leaf.getBehavior().tick(board, agent);
         log.accept(agent.getId() + " " + leaf.getId() + " " + actionName + " " + result);
+        state.setLastExecutedLeaf(leaf);
         state.getStatusCache().put(leaf.getId(), result);
         prepareNextState(state, action);
         return true;
@@ -145,6 +146,7 @@ public class TreeExecution {
                 NodeStatus result = leaf.getBehavior().tick(board, agent);
                 String conditionName = getLeafBehaviorName(leaf);
                 log.accept(agent.getId() + " " + leaf.getId() + " " + conditionName + " " + result);
+                state.setLastExecutedLeaf(leaf);
                 state.getStatusCache().put(leaf.getId(), result);
                 return null;
             } else {

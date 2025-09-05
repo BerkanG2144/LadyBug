@@ -56,11 +56,13 @@ public class TreeExecution {
             state.setCurrentNode(currentNode);
         }
 
-        // Finde und führe nächste Action aus
+        // Find and execute next Action
         BehaviorTreeNode action = findNextAction(currentNode, board, agent, state);
         if (action == null) {
-            // Kein Action gefunden -> zurück zur Wurzel für nächsten Durchlauf
+            // No action found -> reset to root for next tick
             state.setCurrentNode(root);
+            // Clear cache only for completed nodes (not for parallel nodes still in progress)
+            cleanupCompletedNodeCache(state);
             return false;
         }
 
@@ -70,14 +72,56 @@ public class TreeExecution {
         String actionName = getLeafBehaviorName(leaf);
         log.accept(agent.getId() + " " + leaf.getId() + " " + actionName + " " + result);
 
-        // Nach Action: bereite nächsten Zustand vor
+        // Cache the action result
+        state.getStatusCache().put(leaf.getId(), result);
+
+        // After Action: prepare next state
         prepareNextState(state, action);
 
         return true;
     }
 
+    private void cleanupCompletedNodeCache(ExecuteState state) {
+        // Only clear cache for nodes that are definitely complete
+        // Keep cache for parallel nodes that might still have unexecuted children
+        Map<String, NodeStatus> cache = state.getStatusCache();
+        Map<String, NodeStatus> newCache = new HashMap<>();
+
+        // Keep statuses that might still be needed
+        for (Map.Entry<String, NodeStatus> entry : cache.entrySet()) {
+            String nodeId = entry.getKey();
+            BehaviorTreeNode node = state.findNodeById(nodeId);
+
+            // Keep leaf node results within parallel nodes
+            if (node instanceof LeafNode) {
+                BehaviorTreeNode parent = findParentNode(state.getRootNode(), node);
+                if (parent instanceof ParallelNode) {
+                    newCache.put(nodeId, entry.getValue());
+                }
+            }
+        }
+
+        cache.clear();
+        cache.putAll(newCache);
+    }
+
+    private BehaviorTreeNode findParentNode(BehaviorTreeNode root, BehaviorTreeNode target) {
+        if (root == null || target == null) return null;
+
+        for (BehaviorTreeNode child : root.getChildren()) {
+            if (child == target) {
+                return root;
+            }
+            BehaviorTreeNode parent = findParentNode(child, target);
+            if (parent != null) {
+                return parent;
+            }
+        }
+        return null;
+    }
+
     private void prepareNextState(ExecuteState state, BehaviorTreeNode executedAction) {
-        // Nach einer Action: gehe zurück zur Wurzel für nächsten Durchlauf
+        // After an Action: go back to root for next tick
         state.setCurrentNode(state.getRootNode());
     }
 
@@ -88,49 +132,88 @@ public class TreeExecution {
 
         if (node instanceof LeafNode leaf) {
             if (leaf.isCondition()) {
+                // Check if this condition was already evaluated in current parallel context
+                if (state.getStatusCache().containsKey(leaf.getId())) {
+                    // Already evaluated, don't re-evaluate
+                    return null;
+                }
+
                 NodeStatus result = leaf.getBehavior().tick(board, agent);
                 String conditionName = getLeafBehaviorName(leaf);
                 log.accept(agent.getId() + " " + leaf.getId() + " " + conditionName + " " + result);
                 state.getStatusCache().put(leaf.getId(), result);
                 return null;
             } else {
-                return leaf; // Action gefunden
+                // Check if this action was already executed in current parallel context
+                if (state.getStatusCache().containsKey(leaf.getId())) {
+                    // Already executed, skip
+                    return null;
+                }
+                return leaf; // Action found
             }
         }
 
         if (node instanceof SequenceNode seq) {
             for (BehaviorTreeNode child : seq.getChildren()) {
+                // Check if child already has a cached result
+                NodeStatus cached = state.getStatusCache().get(child.getId());
+                if (cached != null) {
+                    if (cached == NodeStatus.FAILURE) {
+                        log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " FAILURE");
+                        state.getStatusCache().put(node.getId(), NodeStatus.FAILURE);
+                        return null;
+                    }
+                    // SUCCESS -> continue to next child
+                    continue;
+                }
+
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
                 if (next != null) return next;
 
-                // Prüfe den tatsächlichen Status des Kindes
+                // Check the actual status of the child after recursive call
                 NodeStatus childResult = state.getStatusCache().get(child.getId());
-                if (childResult == null) {
-                    // Für Composite-Kinder, die keinen cached Status haben
-                    childResult = NodeStatus.SUCCESS; // oder was auch immer die Logik erfordert
+                if (childResult == null && child instanceof CompositeNode) {
+                    // For composite children without cached status, check their children
+                    continue;
                 }
 
                 if (childResult == NodeStatus.FAILURE) {
                     log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " FAILURE");
+                    state.getStatusCache().put(node.getId(), NodeStatus.FAILURE);
                     return null;
                 }
             }
             log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " SUCCESS");
+            state.getStatusCache().put(node.getId(), NodeStatus.SUCCESS);
             return null;
         }
 
         if (node instanceof FallbackNode fb) {
             for (BehaviorTreeNode child : fb.getChildren()) {
+                // Check if child already has a cached result
+                NodeStatus cached = state.getStatusCache().get(child.getId());
+                if (cached != null) {
+                    if (cached == NodeStatus.SUCCESS) {
+                        log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " SUCCESS");
+                        state.getStatusCache().put(node.getId(), NodeStatus.SUCCESS);
+                        return null;
+                    }
+                    // FAILURE -> continue to next child
+                    continue;
+                }
+
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
                 if (next != null) return next;
 
                 NodeStatus res = state.getStatusCache().getOrDefault(child.getId(), NodeStatus.FAILURE);
                 if (res == NodeStatus.SUCCESS) {
-                    log.accept(agent.getId() + " " + node.getId() + " SUCCESS");
+                    log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " SUCCESS");
+                    state.getStatusCache().put(node.getId(), NodeStatus.SUCCESS);
                     return null;
                 }
             }
-            log.accept(agent.getId() + " " + node.getId() + " FAILURE");
+            log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " FAILURE");
+            state.getStatusCache().put(node.getId(), NodeStatus.FAILURE);
             return null;
         }
 
@@ -141,37 +224,50 @@ public class TreeExecution {
             int N = par.getRequiredSuccesses();
 
             for (BehaviorTreeNode child : children) {
-                // 1) Terminale Kinder NICHT erneut betreten
+                // IMPORTANT: Check if child already has a definite result in cache
                 NodeStatus cached = state.getStatusCache().get(child.getId());
-                if (cached == NodeStatus.SUCCESS || cached == NodeStatus.FAILURE) {
-                    if (cached == NodeStatus.SUCCESS) succ++;
-                    else fail++;
+                if (cached != null) {
+                    // This child was already evaluated in a previous tick
+                    if (cached == NodeStatus.SUCCESS) {
+                        succ++;
+                    } else if (cached == NodeStatus.FAILURE) {
+                        fail++;
+                    }
+                    // Skip this child - don't re-evaluate
                     continue;
                 }
 
-                // 2) Nur für nicht-entschiedene Kinder eine Action suchen
+                // Only search for action in non-evaluated children
                 BehaviorTreeNode action = findNextAction(child, board, agent, state);
-                if (action != null) return action; // eine Action pro Tick
+                if (action != null) {
+                    // Found an action to execute - return it immediately
+                    return action;
+                }
 
-                // 3) Nach dem rekursiven Versuch: Status zählen (falls Kind ein Composite ist und Status schrieb)
-                NodeStatus s = state.getStatusCache().get(child.getId());
-                if (s == NodeStatus.SUCCESS) succ++;
-                else if (s == NodeStatus.FAILURE) fail++;
-                // s == null -> Kind hat noch nichts entschieden (okay)
+                // After recursive call, check if child now has a status
+                NodeStatus childStatus = state.getStatusCache().get(child.getId());
+                if (childStatus == NodeStatus.SUCCESS) {
+                    succ++;
+                } else if (childStatus == NodeStatus.FAILURE) {
+                    fail++;
+                }
+                // If childStatus is null, child is not yet decided (composite still in progress)
             }
 
-            // 4) Parallel-Entscheidung nur mit SUCCESS/FAILURE (ohne RUNNING):
-            // SUCCESS, wenn N erreicht; FAILURE, wenn N unerreichbar; sonst KEINE endgültige Entscheidung loggen.
+            // Check if parallel node can be decided
             if (succ >= N) {
                 log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " SUCCESS");
                 state.getStatusCache().put(node.getId(), NodeStatus.SUCCESS);
+                // Clear child statuses when parallel completes
+                clearChildStatuses(node, state);
             } else if (fail > (M - N)) {
                 log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " FAILURE");
                 state.getStatusCache().put(node.getId(), NodeStatus.FAILURE);
+                // Clear child statuses when parallel completes
+                clearChildStatuses(node, state);
             } else {
-                // Weder Erfolg noch Misserfolg fest -> nichts terminales loggen,
-                // nur im Cache NICHTS für den Parallel-Knoten setzen.
-                // (So bleibt Raum, im nächsten Tick die restlichen Kinder zu bedienen.)
+                // Parallel node is not yet decided - keep child statuses for next tick
+                // Don't put anything in cache for the parallel node itself
             }
             return null;
         }
@@ -179,10 +275,20 @@ public class TreeExecution {
         return null;
     }
 
+    private void clearChildStatuses(BehaviorTreeNode parent, ExecuteState state) {
+        // When a parallel node completes, clear its children's cached statuses
+        for (BehaviorTreeNode child : parent.getChildren()) {
+            state.getStatusCache().remove(child.getId());
+            if (child instanceof CompositeNode) {
+                clearChildStatuses(child, state);
+            }
+        }
+    }
+
     private String getLeafBehaviorName(LeafNode leaf) {
         String className = leaf.getBehavior().getClass().getSimpleName();
 
-        // Konvertiere erste Buchstabe zu lowercase für camelCase
+        // Convert first letter to lowercase for camelCase
         if (className.length() > 0) {
             return Character.toLowerCase(className.charAt(0)) + className.substring(1);
         }
@@ -192,5 +298,4 @@ public class TreeExecution {
     public void reset(Ladybug agent) {
         stateOf(agent).reset();
     }
-
 }

@@ -3,6 +3,7 @@ package engine;
 import bt.*;
 import model.Board;
 import model.Ladybug;
+import org.w3c.dom.Node;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,24 +60,26 @@ public class TreeExecution {
         // Find and execute next Action
         BehaviorTreeNode action = findNextAction(currentNode, board, agent, state);
         if (action == null) {
-            // No action found -> reset to root for next tick
-            state.setCurrentNode(root);
-            // Clear cache only for completed nodes (not for parallel nodes still in progress)
-            return false;
+            NodeStatus rootStatus = state.getStatusCache().get(root.getId());
+            if (rootStatus != null) {
+                state.setCurrentNode(root);
+                state.getStatusCache().clear();
+
+                action = findNextAction(root, board, agent, state);
+                if (action == null) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         }
 
         LeafNode leaf = (LeafNode) action;
         String actionName = getLeafBehaviorName(leaf);
-
         NodeStatus result = leaf.getBehavior().tick(board, agent);
-
         log.accept(agent.getId() + " " + leaf.getId() + " " + actionName + " " + result);
-        // Cache the action result
         state.getStatusCache().put(leaf.getId(), result);
-
-        // After Action: prepare next state
         prepareNextState(state, action);
-
         return true;
     }
 

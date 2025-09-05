@@ -67,9 +67,13 @@ public class Board {
 
     // === Conditions ===
     public boolean atEdge(Ladybug ladybug) {
-        return getFrontPosition(ladybug) == null;
-    }
+        Position pos = ladybug.getPosition();
+        int x = pos.x();
+        int y = pos.y();
 
+        // Prüfe ob Marienkäfer an irgendeinem Rand steht
+        return x == 1 || x == grid.getWidth() || y == 1 || y == grid.getHeight();
+    }
     public boolean treeFront(Ladybug ladybug) {
         Position front = getFrontPosition(ladybug);
         return front != null && getCell(front) == '#';
@@ -99,34 +103,26 @@ public class Board {
     }
 
     public boolean placeLeaf(Ladybug ladybug) {
-        if (atEdge(ladybug) || treeFront(ladybug) || mushroomFront(ladybug)) {
-            return false;
-        }
-
         Position front = getFrontPosition(ladybug);
-        if (getCell(front) != '.') {
-            return false;
-        }
+        if (front == null) return false;       // außerhalb
+        char c = getCell(front);
+        if (c != '.') return false;            // nur auf leeres Feld
         setCell(front, '*');
         return true;
     }
 
     public boolean takeLeaf(Ladybug ladybug) {
-        if (atEdge(ladybug) || !leafFront(ladybug)) {
-            return false;
-        }
-
         Position front = getFrontPosition(ladybug);
+        if (front == null) return false;
+        if (getCell(front) != '*') return false;
         setCell(front, '.');
         return true;
     }
 
     public boolean moveForward(Ladybug ladybug) {
-        if (atEdge(ladybug) || treeFront(ladybug)) {
-            return false;
-        }
-
         Position front = getFrontPosition(ladybug);
+        if (front == null) return false;
+        if (treeFront(ladybug)) return false;
         char c = getCell(front);
         Direction direction = ladybug.getDirection();
 

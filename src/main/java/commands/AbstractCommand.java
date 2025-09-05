@@ -2,17 +2,26 @@ package commands;
 
 import main.GameState;
 import model.Board;
-import model.BoardGrid;
-import model.LadybugManager;
-import model.PathFinder;
 
 /**
- * Base class for all commands with common validation and access methods.
- * @author u-Kürzel
+ * Base class for CLI commands in the Ladybug application.
+ * Provides shared utilities (e.g., access to game state, validation helpers)
+ * and a template method pattern via {@code execute} delegating to {@code executeInternal}.
+ *
+ * Implementations should override {@code executeInternal} to perform the actual work.
+ *
+ * @author ujnaa
  */
 public abstract class AbstractCommand implements Command {
     protected final GameState gameState;
 
+
+    /**
+     * Creates a new command bound to the given {@link GameState}.
+     *
+     * @param gameState the shared game state, must not be {@code null}
+     * @throws IllegalArgumentException if {@code gameState} is {@code null}
+     */
     protected AbstractCommand(GameState gameState) {
         this.gameState = gameState;
     }
@@ -38,22 +47,23 @@ public abstract class AbstractCommand implements Command {
         }
     }
 
-    // Convenience accessors
+    /**
+     * Returns the currently loaded {@link Board}.
+     *
+     * @return the board, never {@code null} after calling {@link #requireBoard()}
+     */
     protected Board getBoard() {
         return gameState.getBoard();
     }
 
-    protected BoardGrid getGrid() {
-        return gameState.getGrid();
-    }
-
-    protected LadybugManager getLadybugManager() {
-        return gameState.getLadybugManager();
-    }
-
-    protected PathFinder getPathFinder() {
-        return gameState.getPathFinder();
-    }
+    /**
+     * Executes the specific command logic.
+     * Subclasses should throw {@link IllegalArgumentException} or {@link IllegalStateException}
+     * in case of invalid input or missing state.
+     *
+     * @param args command arguments
+     */
+    protected abstract void executeInternal(String[] args);
 
     /**
      * Safe execute method that handles common errors.
@@ -69,11 +79,4 @@ public abstract class AbstractCommand implements Command {
             System.out.println("Error: " + e.getMessage());
         }
     }
-
-    /**
-     * Internal execute method to be implemented by subclasses.
-     * @param args command arguments
-     * @throws Exception if execution fails
-     */
-    protected abstract void executeInternal(String[] args) throws Exception;
 }

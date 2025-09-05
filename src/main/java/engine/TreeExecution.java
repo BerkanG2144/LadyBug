@@ -60,17 +60,19 @@ public class TreeExecution {
         // Find and execute next Action
         BehaviorTreeNode action = findNextAction(currentNode, board, agent, state);
         if (action == null) {
+            //Check if we completed tree
             NodeStatus rootStatus = state.getStatusCache().get(root.getId());
             if (rootStatus != null) {
+                //Tree completed, restart from root
                 state.setCurrentNode(root);
                 state.getStatusCache().clear();
-
+                //Try again from root
                 action = findNextAction(root, board, agent, state);
                 if (action == null) {
-                    return false;
+                    return false; //really no action possible
                 }
             } else {
-                return false;
+                return false; //No action found and tree not completed
             }
         }
 

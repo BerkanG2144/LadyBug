@@ -166,6 +166,10 @@ public class Board {
     }
 
     // === Helper methods ===
+    private boolean isValidCoordinate(int x, int y) {
+        return x >= 1 && x <= grid.getWidth() && y >= 1 && y <= grid.getHeight();
+    }
+
     private Position getFrontPosition(Ladybug ladybug) {
         Direction dir = ladybug.getDirection();
         Position pos = ladybug.getPosition();
@@ -173,9 +177,10 @@ public class Board {
         int newX = pos.x() + dir.getDx();
         int newY = pos.y() + dir.getDy();
 
-        if (!grid.isValidPosition(new Position(newX, newY))) {
+        if (!isValidCoordinate(newX, newY)) {
             return null;
         }
+
         return new Position(newX, newY);
     }
 

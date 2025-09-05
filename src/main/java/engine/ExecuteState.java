@@ -17,6 +17,12 @@ public class ExecuteState {
 
     private final Map<String, Integer> parallelCurrentIndex = new HashMap<>();
 
+    private final Set<String> openCompositeEntries = new HashSet<>();
+
+    public Set<String> getOpenCompositeEntries() {
+        return openCompositeEntries;
+    }
+
 
     public BehaviorTreeNode getCurrentNode() {
         return currentNode;
@@ -42,9 +48,13 @@ public class ExecuteState {
         }
     }
 
+//    public void reset() {
+//        currentNode = null;
+//        statusCache.clear();
+//    }
     public void reset() {
-        currentNode = null;
-        statusCache.clear();
+        // ... bestehendes reset ...
+        openCompositeEntries.clear();
     }
 
     public BehaviorTreeNode findNodeById(String nodeId) {

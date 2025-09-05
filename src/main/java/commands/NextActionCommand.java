@@ -37,9 +37,7 @@ public class NextActionCommand extends AbstractCommand{
 
             boolean actionExecuted = execution.tick(getBoard(), ladybug.get());
 
-            if (actionExecuted) {
-                getBoard().print();
-            }
+            getBoard().print();
         }
     }
 

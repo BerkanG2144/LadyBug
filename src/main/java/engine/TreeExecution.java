@@ -62,16 +62,15 @@ public class TreeExecution {
             // No action found -> reset to root for next tick
             state.setCurrentNode(root);
             // Clear cache only for completed nodes (not for parallel nodes still in progress)
-            cleanupCompletedNodeCache(state);
             return false;
         }
 
         LeafNode leaf = (LeafNode) action;
+        String actionName = getLeafBehaviorName(leaf);
+
         NodeStatus result = leaf.getBehavior().tick(board, agent);
 
-        String actionName = getLeafBehaviorName(leaf);
         log.accept(agent.getId() + " " + leaf.getId() + " " + actionName + " " + result);
-
         // Cache the action result
         state.getStatusCache().put(leaf.getId(), result);
 
@@ -127,7 +126,7 @@ public class TreeExecution {
 
     private BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent, ExecuteState state) {
         if (!(node instanceof LeafNode)) {
-            log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " ENTRY");
+            logCompositeEntryOnce(agent, state, node);
         }
 
         if (node instanceof LeafNode leaf) {
@@ -161,6 +160,7 @@ public class TreeExecution {
                     if (cached == NodeStatus.FAILURE) {
                         log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " FAILURE");
                         state.getStatusCache().put(node.getId(), NodeStatus.FAILURE);
+                        resolveComposite(state, node);
                         return null;
                     }
                     // SUCCESS -> continue to next child
@@ -180,6 +180,7 @@ public class TreeExecution {
                 if (childResult == NodeStatus.FAILURE) {
                     log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " FAILURE");
                     state.getStatusCache().put(node.getId(), NodeStatus.FAILURE);
+                    resolveComposite(state, node); // ← NEU
                     return null;
                 }
             }
@@ -196,6 +197,7 @@ public class TreeExecution {
                     if (cached == NodeStatus.SUCCESS) {
                         log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " SUCCESS");
                         state.getStatusCache().put(node.getId(), NodeStatus.SUCCESS);
+                        resolveComposite(state, node); // ← NEU
                         return null;
                     }
                     // FAILURE -> continue to next child
@@ -209,6 +211,7 @@ public class TreeExecution {
                 if (res == NodeStatus.SUCCESS) {
                     log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " SUCCESS");
                     state.getStatusCache().put(node.getId(), NodeStatus.SUCCESS);
+                    resolveComposite(state, node); // ← NEU
                     return null;
                 }
             }
@@ -260,11 +263,13 @@ public class TreeExecution {
                 state.getStatusCache().put(node.getId(), NodeStatus.SUCCESS);
                 // Clear child statuses when parallel completes
                 clearChildStatuses(node, state);
+                resolveComposite(state, node); // ← NEU
             } else if (fail > (M - N)) {
                 log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " FAILURE");
                 state.getStatusCache().put(node.getId(), NodeStatus.FAILURE);
                 // Clear child statuses when parallel completes
                 clearChildStatuses(node, state);
+                resolveComposite(state, node); // ← NEU
             } else {
                 // Parallel node is not yet decided - keep child statuses for next tick
                 // Don't put anything in cache for the parallel node itself
@@ -293,6 +298,18 @@ public class TreeExecution {
             return Character.toLowerCase(className.charAt(0)) + className.substring(1);
         }
         return className;
+    }
+
+    private void logCompositeEntryOnce(Ladybug agent, ExecuteState state, BehaviorTreeNode node) {
+        if (node instanceof LeafNode) return;
+        var open = state.getOpenCompositeEntries();
+        if (open.add(node.getId())) { // nur wenn neu
+            log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " ENTRY");
+        }
+    }
+
+    private void resolveComposite(ExecuteState state, BehaviorTreeNode node) {
+        state.getOpenCompositeEntries().remove(node.getId());
     }
 
     public void reset(Ladybug agent) {

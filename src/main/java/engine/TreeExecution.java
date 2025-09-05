@@ -135,40 +135,44 @@ public class TreeExecution {
         }
 
         if (node instanceof ParallelNode par) {
-            int success = 0;
-            int fail = 0;
-            int run = 0;
-            int unknown = 0;
+            int succ = 0, fail = 0;
             var children = par.getChildren();
             int M = children.size();
             int N = par.getRequiredSuccesses();
 
             for (BehaviorTreeNode child : children) {
-                BehaviorTreeNode action = findNextAction(child, board, agent, state);
-                if (action != null) {
-                    return action; //one action per tick
-                }
-
-                NodeStatus s = state.getStatusCache().get(child.getId());
-                if (s == null) {
-                    unknown++;
+                // 1) Terminale Kinder NICHT erneut betreten
+                NodeStatus cached = state.getStatusCache().get(child.getId());
+                if (cached == NodeStatus.SUCCESS || cached == NodeStatus.FAILURE) {
+                    if (cached == NodeStatus.SUCCESS) succ++;
+                    else fail++;
                     continue;
                 }
-                switch (s) {
-                    case SUCCESS -> success++;
-                    case FAILURE -> fail++;
-                }
+
+                // 2) Nur für nicht-entschiedene Kinder eine Action suchen
+                BehaviorTreeNode action = findNextAction(child, board, agent, state);
+                if (action != null) return action; // eine Action pro Tick
+
+                // 3) Nach dem rekursiven Versuch: Status zählen (falls Kind ein Composite ist und Status schrieb)
+                NodeStatus s = state.getStatusCache().get(child.getId());
+                if (s == NodeStatus.SUCCESS) succ++;
+                else if (s == NodeStatus.FAILURE) fail++;
+                // s == null -> Kind hat noch nichts entschieden (okay)
             }
 
-            NodeStatus overall = null;
-            if (success >= N) {
-                overall = NodeStatus.SUCCESS;
+            // 4) Parallel-Entscheidung nur mit SUCCESS/FAILURE (ohne RUNNING):
+            // SUCCESS, wenn N erreicht; FAILURE, wenn N unerreichbar; sonst KEINE endgültige Entscheidung loggen.
+            if (succ >= N) {
+                log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " SUCCESS");
+                state.getStatusCache().put(node.getId(), NodeStatus.SUCCESS);
             } else if (fail > (M - N)) {
-                overall = NodeStatus.FAILURE;
+                log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " FAILURE");
+                state.getStatusCache().put(node.getId(), NodeStatus.FAILURE);
+            } else {
+                // Weder Erfolg noch Misserfolg fest -> nichts terminales loggen,
+                // nur im Cache NICHTS für den Parallel-Knoten setzen.
+                // (So bleibt Raum, im nächsten Tick die restlichen Kinder zu bedienen.)
             }
-
-            log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " " + overall);
-            state.getStatusCache().put(node.getId(), overall);
             return null;
         }
 

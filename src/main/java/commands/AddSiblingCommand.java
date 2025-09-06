@@ -25,9 +25,7 @@ public class AddSiblingCommand extends AbstractCommand {
             throw new CommandArgumentException(getCommandName(), args,
                     "Usage: add sibling <ladybug> <id> <node>");
         }
-
         requireLadybugs();
-
         int ladybugId;
         try {
             ladybugId = Integer.parseInt(args[1]);
@@ -35,11 +33,9 @@ public class AddSiblingCommand extends AbstractCommand {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error: invalid ladybug ID");
         }
-
         String nodeId = args[2];
         String nodeDefinition = args[3];
 
-        // Validate ladybug exists
         Optional<Ladybug> ladybug = getBoard().getLadybugById(ladybugId);
         if (ladybug.isEmpty()) {
             throw new LadybugNotFoundException(ladybugId);

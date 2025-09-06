@@ -2,16 +2,9 @@ package exceptions;
 
 /**
  * Base exception class for all behavior tree related exceptions.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class BehaviorTreeException extends Exception {
-
-    /**
-     * Constructs a new behavior tree exception.
-     */
-    public BehaviorTreeException() {
-        super();
-    }
 
     /**
      * Constructs a new behavior tree exception with the specified detail message.

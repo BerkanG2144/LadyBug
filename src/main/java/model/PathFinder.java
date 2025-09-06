@@ -3,11 +3,9 @@ package model;
 import java.util.ArrayDeque;
 
 public class PathFinder {
-    private final BoardGrid grid;
-
-    // Movement directions: North, South, West, East
     private static final int[] DX = { 0,  0, -1, 1};
     private static final int[] DY = {-1,  1,  0, 0};
+    private final BoardGrid grid;
 
     public PathFinder(BoardGrid grid) {
         this.grid = grid;

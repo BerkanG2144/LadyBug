@@ -4,7 +4,7 @@ import java.nio.file.Path;
 
 /**
  * Exception thrown when a board file cannot be parsed.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class BoardParsingException extends BehaviorTreeException {
 

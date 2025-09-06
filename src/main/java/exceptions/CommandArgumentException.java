@@ -2,7 +2,7 @@ package exceptions;
 
 /**
  * Exception thrown when command arguments are invalid or malformed.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class CommandArgumentException extends BehaviorTreeException {
 

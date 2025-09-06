@@ -1,6 +1,6 @@
 package model;
 
-public record Position (int x, int y) {
+public record Position(int x, int y) {
 
     public Position {
         if (x < 1 || y < 1) {

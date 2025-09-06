@@ -1,10 +1,10 @@
 package model;
 
 public class BoardGrid {
+    private static final char[] VALID_SYMBOLS = { '#', '*', 'o', '.', '^', '>', 'v', '<' };
     private final char[][] grid;
     private final int width;
     private final int height;
-    private static final char[] VALID_SYMBOLS = { '#', '*', 'o', '.', '^', '>', 'v', '<' };
 
     public BoardGrid(char[][] grid) {
         validateGrid(grid);

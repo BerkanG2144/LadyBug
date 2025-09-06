@@ -4,7 +4,7 @@ import java.nio.file.Path;
 
 /**
  * Exception thrown when a behavior tree cannot be parsed from Mermaid syntax.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class TreeParsingException extends BehaviorTreeException {
 

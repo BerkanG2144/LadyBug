@@ -8,10 +8,39 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 
-public class BoardParser {
-
+/**
+ * Utility class for parsing board files into Board objects.
+ *
+ * This parser reads text files containing board layouts and validates
+ * the format and symbols. The board must be rectangular and contain
+ * only valid symbols representing empty spaces, trees, leaves, mushrooms,
+ * and ladybugs with their directions.
+ *
+ * @author ujnaa
+ */
+public final class BoardParser {
     private static final Set<Character> VALID_SYMBOLS = Set.of('.', '#', '*', 'o', '^', '>', 'v', '<');
 
+    private BoardParser() {
+        //
+    }
+
+
+    /**
+     * Parses a board file and creates a Board object.
+     *
+     * Reads the specified file, validates its format and content, then creates
+     * a Board object from the parsed data. The file must contain a rectangular
+     * grid of valid symbols. The content is also printed to standard output
+     * for verification purposes.
+     *
+     * @param path the path to the board file to parse
+     * @return a new Board object created from the file content
+     * @throws IOException if an I/O error occurs while reading the file
+     * @throws IllegalArgumentException if the path is null/empty, the file doesn't exist,
+     *         the file is empty, the board has zero width, the board is not rectangular,
+     *         or the file contains invalid characters
+     */
     public static Board parse(String path) throws IOException {
         if (path == null || path.trim().isEmpty()) {
             throw new IllegalArgumentException("Error, file path cannot be null or empty");
@@ -48,8 +77,6 @@ public class BoardParser {
                 grid[y][x] = c;
             }
         }
-
         return new Board(grid);
     }
-
 }

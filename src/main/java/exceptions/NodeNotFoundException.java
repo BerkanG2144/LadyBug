@@ -2,7 +2,7 @@ package exceptions;
 
 /**
  * Exception thrown when a behavior tree node cannot be found.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class NodeNotFoundException extends BehaviorTreeException {
 

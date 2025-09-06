@@ -1,6 +1,7 @@
 package model;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class Board {
     private final BoardGrid grid;
@@ -104,25 +105,37 @@ public class Board {
 
     public boolean placeLeaf(Ladybug ladybug) {
         Position front = getFrontPosition(ladybug);
-        if (front == null) return false;       // außerhalb
+        if (front == null) {
+            return false;
+        }
         char c = getCell(front);
-        if (c != '.') return false;            // nur auf leeres Feld
+        if (c != '.') {
+            return false;
+        }
         setCell(front, '*');
         return true;
     }
 
     public boolean takeLeaf(Ladybug ladybug) {
         Position front = getFrontPosition(ladybug);
-        if (front == null) return false;
-        if (getCell(front) != '*') return false;
+        if (front == null) {
+            return false;
+        }
+        if (getCell(front) != '*') {
+            return false;
+        }
         setCell(front, '.');
         return true;
     }
 
     public boolean moveForward(Ladybug ladybug) {
         Position front = getFrontPosition(ladybug);
-        if (front == null) return false;
-        if (treeFront(ladybug)) return false;
+        if (front == null) {
+            return false;
+        }
+        if (treeFront(ladybug)) {
+            return false;
+        }
         char c = getCell(front);
         Direction direction = ladybug.getDirection();
 

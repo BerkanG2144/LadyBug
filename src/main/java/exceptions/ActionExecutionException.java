@@ -2,7 +2,7 @@ package exceptions;
 
 /**
  * Exception thrown when an action cannot be executed.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class ActionExecutionException extends BehaviorTreeException {
 

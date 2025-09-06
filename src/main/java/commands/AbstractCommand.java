@@ -1,5 +1,8 @@
 package commands;
 
+import exceptions.BoardException;
+import exceptions.CommandArgumentException;
+import exceptions.LadybugNotFoundException;
 import main.GameState;
 import model.Board;
 
@@ -7,7 +10,6 @@ import model.Board;
  * Base class for CLI commands in the Ladybug application.
  * Provides shared utilities (e.g., access to game state, validation helpers)
  * and a template method pattern via {@code execute} delegating to {@code executeInternal}.
- *
  * Implementations should override {@code executeInternal} to perform the actual work.
  *
  * @author ujnaa
@@ -28,22 +30,23 @@ public abstract class AbstractCommand implements Command {
 
     /**
      * Validates that a board is loaded.
-     * @throws IllegalStateException if no board is loaded
+     * @throws BoardException if no board is loaded
      */
-    protected void requireBoard() {
+    protected void requireBoard() throws BoardException {
         if (gameState.getBoard() == null) {
-            throw new IllegalStateException("Error: no board loaded");
+            throw new BoardException("Error: no board loaded");
         }
     }
 
     /**
      * Validates that ladybugs exist on the board.
-     * @throws IllegalStateException if no ladybugs found
+     * @throws BoardException if no board is loaded
+     * @throws LadybugNotFoundException if no ladybugs found
      */
-    protected void requireLadybugs() {
+    protected void requireLadybugs() throws BoardException, LadybugNotFoundException {
         requireBoard();
         if (getBoard().listLadybugsIds().isEmpty()) {
-            throw new IllegalStateException("Error: no ladybugs found");
+            throw new LadybugNotFoundException(-1);
         }
     }
 
@@ -61,11 +64,13 @@ public abstract class AbstractCommand implements Command {
      * Subclasses should throw {@link IllegalArgumentException} or {@link IllegalStateException}
      * in case of invalid input or missing state.
      * @param args command arguments
-     * @throws IllegalArgumentException for invalid arguments
-     * @throws IllegalStateException for invalid state
+     * @throws BoardException for board-related errors
+     * @throws LadybugNotFoundException when a ladybug cannot be found
+     * @throws CommandArgumentException for invalid command arguments
      */
     protected abstract void executeInternal(String[] args)
-            throws IllegalArgumentException, IllegalStateException;
+            throws BoardException, LadybugNotFoundException, CommandArgumentException;
+
 
     /**
      * Safe execute method that handles common errors.
@@ -75,10 +80,8 @@ public abstract class AbstractCommand implements Command {
     public final void execute(String[] args) {
         try {
             executeInternal(args);
-        } catch (IllegalArgumentException e) {
+        } catch (BoardException | LadybugNotFoundException | CommandArgumentException e) {
             System.out.println(e.getMessage());
-        } catch (RuntimeException e) {
-            System.out.println("Error: " + e.getMessage());
         }
     }
 }

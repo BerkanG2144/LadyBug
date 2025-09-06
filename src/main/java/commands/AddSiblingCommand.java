@@ -2,6 +2,10 @@ package commands;
 
 import bt.BehaviorTreeNode;
 import bt.CompositeNode;
+import exceptions.BoardException;
+import exceptions.CommandArgumentException;
+import exceptions.LadybugNotFoundException;
+import exceptions.TreeParsingException;
 import main.GameState;
 import model.Ladybug;
 import parser.MermaidParser;
@@ -15,9 +19,11 @@ public class AddSiblingCommand extends AbstractCommand {
     }
 
     @Override
-    protected void executeInternal(String[] args) throws Exception {
+    protected void executeInternal(String[] args)
+            throws BoardException, LadybugNotFoundException, CommandArgumentException {
         if (args.length != 4 || !"sibling".equals(args[0])) {
-            throw new IllegalArgumentException("Usage: add sibling <ladybug> <id> <node>");
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Usage: add sibling <ladybug> <id> <node>");
         }
 
         requireLadybugs();
@@ -26,7 +32,8 @@ public class AddSiblingCommand extends AbstractCommand {
         try {
             ladybugId = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Error: invalid ladybug ID");
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error: invalid ladybug ID");
         }
 
         String nodeId = args[2];
@@ -35,33 +42,44 @@ public class AddSiblingCommand extends AbstractCommand {
         // Validate ladybug exists
         Optional<Ladybug> ladybug = getBoard().getLadybugById(ladybugId);
         if (ladybug.isEmpty()) {
-            throw new IllegalArgumentException("Error: ladybug not found");
+            throw new LadybugNotFoundException(ladybugId);
         }
 
         // Get behavior tree for this ladybug
         BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
         if (tree == null) {
-            throw new IllegalArgumentException("Error: no tree loaded for ladybug " + ladybugId);
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error: no tree loaded for ladybug " + ladybugId);
         }
 
         // Find the target node
         BehaviorTreeNode targetNode = findNodeById(tree, nodeId);
         if (targetNode == null) {
-            throw new IllegalArgumentException("Error: node " + nodeId + " not found");
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error: node " + nodeId + " not found");
         }
 
         // Find parent of target node
         BehaviorTreeNode parentNode = findParentNode(tree, targetNode);
         if (parentNode == null) {
-            throw new IllegalArgumentException("Error: cannot add sibling to root node");
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error: cannot add sibling to root node");
         }
 
         if (!(parentNode instanceof CompositeNode)) {
-            throw new IllegalArgumentException("Error: parent node is not composite");
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error: parent node is not composite");
         }
 
         // Parse the new node definition
-        BehaviorTreeNode newNode = parseNodeDefinition(nodeDefinition);
+        //BehaviorTreeNode newNode = parseNodeDefinition(nodeDefinition);
+        BehaviorTreeNode newNode;
+        try {
+            newNode = parseNodeDefinition(nodeDefinition);
+        } catch (TreeParsingException  e) {
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error: invalid node definition: " + e.getMessage());
+        }
 
         // Add sibling to the right of target node
         addSiblingToParent((CompositeNode) parentNode, targetNode, newNode);
@@ -94,7 +112,7 @@ public class AddSiblingCommand extends AbstractCommand {
         return null;
     }
 
-    private BehaviorTreeNode parseNodeDefinition(String nodeDefinition) throws Exception {
+    private BehaviorTreeNode parseNodeDefinition(String nodeDefinition) throws TreeParsingException {
         // Create a minimal mermaid structure to parse the single node
         String mermaidContent = "flowchart TD\n    " + nodeDefinition;
 
@@ -106,11 +124,12 @@ public class AddSiblingCommand extends AbstractCommand {
             // Since we're parsing a single node definition, return that node
             return parsedTree;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Error: invalid node definition: " + e.getMessage());
+            throw new TreeParsingException("Invalid node definition", nodeDefinition);
         }
     }
 
-    private void addSiblingToParent(CompositeNode parent, BehaviorTreeNode targetNode, BehaviorTreeNode newNode) {
+    private void addSiblingToParent(CompositeNode parent, BehaviorTreeNode targetNode, BehaviorTreeNode newNode)
+            throws CommandArgumentException {
         // Get current children
         var children = parent.getChildren();
 
@@ -124,7 +143,8 @@ public class AddSiblingCommand extends AbstractCommand {
         }
 
         if (targetIndex == -1) {
-            throw new IllegalArgumentException("Error: target node not found in parent's children");
+            throw new CommandArgumentException(getCommandName(),
+                    "Error: target node not found in parent's children");
         }
 
         // Insert the new node right after the target (targetIndex + 1)

@@ -10,14 +10,31 @@ import model.Ladybug;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Command to execute the next action for all ladybugs in sequence.
+ *
+ * This command finds and executes the next action node for each ladybug
+ * in order of their IDs. For each ladybug, it traverses the behavior tree
+ * until it finds an action to execute, then displays the board state.
+ *
+ * Usage: next action
+ *
+ * @author ujnaa
+ */
 public class NextActionCommand extends AbstractCommand {
 
+    /**
+     * Creates a new NextActionCommand.
+     *
+     * @param state the game state containing board and tree information
+     */
     public NextActionCommand(GameState state) {
         super(state);
     }
 
     @Override
-    protected void executeInternal(String[] args) throws CommandArgumentException, BoardException, LadybugNotFoundException {
+    protected void executeInternal(String[] args)
+            throws CommandArgumentException, BoardException, LadybugNotFoundException {
         if (args.length != 1 || !"action".equals(args[0])) {
             throw new CommandArgumentException(getCommandName(), args, "Usage: next action");
         }
@@ -37,6 +54,11 @@ public class NextActionCommand extends AbstractCommand {
                 System.out.println("Error: no tree loaded for ladybug " + ladybugId);
                 continue;
             }
+
+            // Execute one tick of the behavior tree for this ladybug
+            boolean actionExecuted = execution.tick(getBoard(), ladybug.get());
+
+            // Print the board after this ladybug's action
             getBoard().print();
         }
     }

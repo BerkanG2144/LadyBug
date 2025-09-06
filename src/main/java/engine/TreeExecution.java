@@ -1,9 +1,15 @@
 package engine;
 
-import bt.*;
+import bt.BehaviorTreeNode;
+import bt.LeafNode;
+import bt.NodeStatus;
+import bt.SequenceNode;
+import bt.ParallelNode;
+import bt.CompositeNode;
+import bt.FallbackNode;
+
 import model.Board;
 import model.Ladybug;
-import org.w3c.dom.Node;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +24,7 @@ public class TreeExecution {
 
     public TreeExecution(BehaviorTreeNode root, Consumer<String> log) {
         this.root = Objects.requireNonNull(root);
-        this.log = log != null ? log : s -> {};
+        this.log = log != null ? log : s -> { };
     }
 
     public ExecuteState stateOf(Ladybug agent) {
@@ -111,7 +117,9 @@ public class TreeExecution {
     }
 
     private BehaviorTreeNode findParentNode(BehaviorTreeNode root, BehaviorTreeNode target) {
-        if (root == null || target == null) return null;
+        if (root == null || target == null) {
+            return null;
+        }
 
         for (BehaviorTreeNode child : root.getChildren()) {
             if (child == target) {
@@ -175,7 +183,9 @@ public class TreeExecution {
                 }
 
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
-                if (next != null) return next;
+                if (next != null) {
+                    return next;
+                }
 
                 // Check the actual status of the child after recursive call
                 NodeStatus childResult = state.getStatusCache().get(child.getId());
@@ -212,7 +222,9 @@ public class TreeExecution {
                 }
 
                 BehaviorTreeNode next = findNextAction(child, board, agent, state);
-                if (next != null) return next;
+                if (next != null) {
+                    return next;
+                }
 
                 NodeStatus res = state.getStatusCache().getOrDefault(child.getId(), NodeStatus.FAILURE);
                 if (res == NodeStatus.SUCCESS) {
@@ -228,7 +240,8 @@ public class TreeExecution {
         }
 
         if (node instanceof ParallelNode par) {
-            int succ = 0, fail = 0;
+            int succ = 0;
+            int fail = 0;
             var children = par.getChildren();
             int M = children.size();
             int N = par.getRequiredSuccesses();
@@ -308,7 +321,9 @@ public class TreeExecution {
     }
 
     private void logCompositeEntryOnce(Ladybug agent, ExecuteState state, BehaviorTreeNode node) {
-        if (node instanceof LeafNode) return;
+        if (node instanceof LeafNode) {
+            return;
+        }
         var open = state.getOpenCompositeEntries();
         if (open.add(node.getId())) { // nur wenn neu
             log.accept(agent.getId() + " " + node.getId() + " " + node.getType() + " ENTRY");

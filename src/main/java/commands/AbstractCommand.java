@@ -60,10 +60,12 @@ public abstract class AbstractCommand implements Command {
      * Executes the specific command logic.
      * Subclasses should throw {@link IllegalArgumentException} or {@link IllegalStateException}
      * in case of invalid input or missing state.
-     *
      * @param args command arguments
+     * @throws IllegalArgumentException for invalid arguments
+     * @throws IllegalStateException for invalid state
      */
-    protected abstract void executeInternal(String[] args);
+    protected abstract void executeInternal(String[] args)
+            throws IllegalArgumentException, IllegalStateException;
 
     /**
      * Safe execute method that handles common errors.
@@ -73,9 +75,9 @@ public abstract class AbstractCommand implements Command {
     public final void execute(String[] args) {
         try {
             executeInternal(args);
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }

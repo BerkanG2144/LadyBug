@@ -2,8 +2,18 @@ package commands;
 
 import main.GameState;
 
+/**
+ * Command to quit the game.
+ *
+ * @author ujnaa
+ */
 public class QuitCommand implements Command {
 
+    /**
+     * Creates a new PrintPositionCommand.
+     *
+     * @param gameState the game state containing board and ladybug information
+     */
     public QuitCommand(GameState gameState) {
         // GameState not needed for quit, but keeping interface consistent
     }
@@ -34,6 +44,9 @@ public class QuitCommand implements Command {
      * Special exception to signal that the program should quit.
      */
     public static class QuitException extends Exception {
+        /**
+         * Constructs a new QuitException with a default message.
+         */
         public QuitException() {
             super("Program terminated by user");
         }

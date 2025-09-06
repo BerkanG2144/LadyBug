@@ -5,12 +5,26 @@ import model.Board;
 import model.Ladybug;
 import model.Position;
 
-import java.util.List;
 import java.util.Optional;
 
+/**
+ * Command to print the current position of a specific ladybug on the board.
+ *
+ * This command displays the coordinates of a ladybug in the format (x, y).
+ * The coordinates are 1-based, with (1,1) being the top-left corner.
+ *
+ * Usage: print position &lt;ladybug&gt;
+ *
+ * @author ujnaa
+ */
 public class PrintPositionCommand implements Command {
     private final GameState state;
 
+    /**
+     * Creates a new PrintPositionCommand.
+     *
+     * @param state the game state containing board and ladybug information
+     */
     public PrintPositionCommand(GameState state) {
         this.state = state;
     }

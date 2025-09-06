@@ -1,9 +1,8 @@
 package commands;
 
 import bt.BehaviorTreeNode;
-import exceptions.BoardException;
+import exceptions.BoardParsingException;
 import exceptions.CommandArgumentException;
-import exceptions.FileParsingException;
 import main.GameState;
 import model.Board;
 import model.Ladybug;
@@ -11,6 +10,7 @@ import model.LadybugPosition;
 import parser.BoardParser;
 import parser.MermaidParser;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -40,76 +40,88 @@ public class LoadCommand implements Command {
     }
 
     @Override
-    public void execute(String[] args) throws CommandArgumentException, BoardException, FileParsingException {
+    public void execute(String[] args) throws CommandArgumentException, IOException, BoardParsingException {
         if (args.length < 2) {
             throw new CommandArgumentException(getCommandName(), args, getUsage());
         }
         String sub = args[0].toLowerCase();
 
-        switch (sub) {
-            case "board": {
-                Path p = Path.of(args[1]);
-                if (!Files.exists(p)) {
-                    throw new IllegalArgumentException("Board-Datei nicht gefunden: " + p);
-                }
+        if ("board".equals(sub)) {
+            loadBoard(args[1]);
+        } else if ("trees".equals(sub)) {
+            loadTrees(args);
+        } else {
+            throw new IllegalArgumentException("Unknown subcommand: " + sub);
+        }
+    }
 
-                Board board = BoardParser.parse(p.toString());
-                state.setBoard(board);
-                break;
+    private void loadBoard(String boardPath) throws BoardParsingException, IOException {
+        Path p = Path.of(boardPath);
+        if (!Files.exists(p)) {
+            throw new BoardParsingException("Board file not found", p);
+        }
+
+        Board board = BoardParser.parse(p.toString());
+        state.setBoard(board);
+    }
+
+    private void loadTrees(String[] args) {
+        if (state.getBoard() == null) {
+            throw new IllegalStateException("Error: no board loaded");
+        }
+
+        String[] treePaths = new String[args.length - 1];
+        System.arraycopy(args, 1, treePaths, 0, args.length - 1);
+        List<LadybugPosition> allLadybugPositions = state.getBoard().getLadybugList();
+
+        state.clearTrees();
+        state.getBoard().getLadybugManager().clearAllLadybugs();
+
+        for (int i = 0; i < treePaths.length; i++) {
+            loadSingleTree(treePaths[i], i, allLadybugPositions);
+        }
+    }
+
+    private void loadSingleTree(String treePath, int index, List<LadybugPosition> allLadybugPositions) {
+        Path path = Path.of(treePath);
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("Tree file not found: " + path);
+        }
+
+        try {
+            String content = Files.readString(path);
+            System.out.println(content.trim());
+
+            BehaviorTreeNode tree = MermaidParser.fromFile(path.toString());
+
+            if (!hasActionNode(tree)) {
+                throw new IllegalArgumentException("Error: behavior tree must contain at least one action");
             }
-            case "trees": {
-                if (state.getBoard() == null) {
-                    throw new IllegalStateException("Error: no board loaded");
-                }
-                String[] treePaths = new String[args.length - 1];
-                System.arraycopy(args, 1, treePaths, 0, args.length - 1);
-                List<LadybugPosition> allLadybugPositions = state.getBoard().getLadybugList();
 
-                state.clearTrees();
-                state.getBoard().getLadybugManager().clearAllLadybugs();
+            LadybugPosition position = allLadybugPositions.get(index);
+            Ladybug ladybug = new Ladybug(index + 1, position.getPosition(), position.getDirection());
+            state.getBoard().addLadybug(ladybug);
 
-                for (int i = 0; i < treePaths.length; i++) {
-                    Path treePath = Path.of(treePaths[i]);
-                    if (!Files.exists(treePath)) {
-                        throw new IllegalArgumentException("Tree file not found: " + treePath);
-                    }
+            state.addTree(index + 1, tree);
 
-                    String content = Files.readString(treePath);
-                    System.out.println(content.trim());
-
-                    try {
-                        BehaviorTreeNode tree = MermaidParser.fromFile(treePath.toString());
-
-                        if (!hasActionNode(tree)) {
-                            throw new IllegalArgumentException("Error: behavior tree must contain at least one action");
-                        }
-
-                        LadybugPosition position = allLadybugPositions.get(i);
-                        Ladybug ladybug = new Ladybug(i + 1, position.getPosition(), position.getDirection());
-                        state.getBoard().addLadybug(ladybug);
-
-                        state.addTree(i + 1, tree);
-
-                    } catch (Exception e) {
-                        throw new IllegalArgumentException("Error parsing tree file " + treePath + ": " + e.getMessage());
-                    }
-                }
-                break;
-            }
-            default:
-                throw new IllegalArgumentException("Unknown subcommand: " + sub);
+        } catch (java.io.IOException e) {
+            // checked Exception darfst du gezielt behandeln
+            throw new IllegalArgumentException("Error reading tree file " + path + ": " + e.getMessage(), e);
         }
     }
 
     /**
-     * Prüft rekursiv, ob der Baum mindestens einen Action-Knoten enthält
+     * Checks recursively if the tree contains at least one action node.
+     *
+     * @param node the node to check
+     * @return true if the tree contains at least one action node
      */
     private boolean hasActionNode(BehaviorTreeNode node) {
         if (node instanceof bt.LeafNode leaf) {
             return leaf.isAction();
         }
 
-        // Für Composite-Knoten: prüfe alle Kinder
+        // For composite nodes: check all children
         for (BehaviorTreeNode child : node.getChildren()) {
             if (hasActionNode(child)) {
                 return true;
@@ -118,10 +130,13 @@ public class LoadCommand implements Command {
         return false;
     }
 
-    @Override public String getCommandName() {
+    @Override
+    public String getCommandName() {
         return "load";
     }
-    @Override public String getUsage() {
+
+    @Override
+    public String getUsage() {
         return "load board <path> | load trees <bugId> <path>";
     }
 }

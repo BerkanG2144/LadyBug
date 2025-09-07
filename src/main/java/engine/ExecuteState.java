@@ -22,10 +22,6 @@ public class ExecuteState {
     private BehaviorTreeNode rootNode;
     private BehaviorTreeNode lastExecutedLeaf;
 
-    private final Map<String, Set<String>> parallelNodeProgress = new HashMap<>();
-
-    private final Map<String, Integer> parallelCurrentIndex = new HashMap<>();
-
     private final Set<String> openCompositeEntries = new HashSet<>();
 
 

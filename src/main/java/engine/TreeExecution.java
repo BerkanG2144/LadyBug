@@ -114,7 +114,6 @@ public class TreeExecution {
             currentNode = root;
             state.setCurrentNode(currentNode);
         }
-
         // Find and execute next Action
         BehaviorTreeNode action = findNextAction(currentNode, board, agent, state);
         if (action == null) {

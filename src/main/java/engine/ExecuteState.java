@@ -101,6 +101,9 @@ public class ExecuteState {
      */
     public void reset() {
         openCompositeEntries.clear();
+        statusCache.clear();
+        currentNode = rootNode;
+        lastExecutedLeaf = null;
     }
 
     /**

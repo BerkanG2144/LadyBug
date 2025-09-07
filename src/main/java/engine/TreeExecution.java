@@ -1,6 +1,13 @@
 package engine;
 
-import bt.*;
+import bt.BehaviorTreeNode;
+import bt.LeafNode;
+import bt.CompositeNode;
+import bt.SequenceNode;
+import bt.ParallelNode;
+import bt.NodeStatus;
+import bt.FallbackNode;
+
 import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
@@ -380,6 +387,7 @@ public class TreeExecution {
      * @param agent the agent to reset
      */
     public void reset(Ladybug agent) {
-        stateOf(agent).reset();
+        ExecuteState state = stateOf(agent);
+        state.reset();
     }
 }

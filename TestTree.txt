@@ -1,0 +1,12 @@
+flowchart TD
+    Root[->] --> TurnIfFacingAway[?]
+    TurnIfFacingAway --> FacingAway([mushroomFront])
+    TurnIfFacingAway --> TurnPlease[->]
+    TurnPlease --> TurnOnce[turnRight]
+    TurnPlease --> TurnTwice[turnRight]
+    TurnPlease --> WasteTime[turnRight]
+    TurnPlease --> GoBack[turnLeft]
+    Root --> Push[move]
+    Root --> TurnBack[turnRight]
+    Root --> TurnBackMore[turnRight]
+    Root --> MoveBack[move]

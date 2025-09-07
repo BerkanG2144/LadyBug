@@ -1,7 +1,6 @@
 package main;
 
 import bt.BehaviorTreeNode;
-import engine.Logger;
 import engine.TreeExecution;
 import model.Board;
 import model.BoardGrid;

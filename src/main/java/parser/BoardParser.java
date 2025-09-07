@@ -1,5 +1,6 @@
 package parser;
 
+import exceptions.BoardException;
 import exceptions.LadybugException;
 import model.Board;
 
@@ -42,14 +43,14 @@ public final class BoardParser {
      * @throws LadybugException if the path is null/empty, the file doesn't exist,
      *         the file is empty, the board has zero width, the board is not rectangular,
      *         or the file contains invalid characters
-     * @throws IllegalArgumentException no plan
+     * @throws BoardException no plan
      */
-    public static Board parse(String path) throws IOException, LadybugException {
+    public static Board parse(String path) throws IOException, LadybugException, BoardException {
         if (path == null || path.trim().isEmpty()) {
-            throw new IllegalArgumentException("Error, file path cannot be null or empty");
+            throw new BoardException("Error, file path cannot be null or empty");
         }
         if (!Files.exists(Paths.get(path))) {
-            throw new IllegalArgumentException("Error, file does not exist: " + path);
+            throw new BoardException("Error, file does not exist: " + path);
         }
 
         String content = Files.readString(Paths.get(path));
@@ -63,23 +64,23 @@ public final class BoardParser {
         }
 
         if (lines.isEmpty()) {
-            throw new IllegalArgumentException("Error, file is empty");
+            throw new BoardException("Error, file is empty");
         }
         int width = lines.get(0).length();
         if (width == 0) {
-            throw new IllegalArgumentException("Error, board has zero width");
+            throw new BoardException("Error, board has zero width");
         }
 
         char[][] grid = new char[lines.size()][width];
         for (int y = 0; y < lines.size(); y++) {
             String line = lines.get(y);
             if (line.length() != width) {
-                throw new IllegalArgumentException("Error, board must be rectangular");
+                throw new BoardException("Error, board must be rectangular");
             }
             for (int x = 0; x < width; x++) {
                 char c = line.charAt(x);
                 if (!VALID_SYMBOLS.contains(c)) {
-                    throw new IllegalArgumentException("Error, invalid character: " + c);
+                    throw new BoardException("Error, invalid character: ");
                 }
                 grid[y][x] = c;
             }

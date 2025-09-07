@@ -53,7 +53,7 @@ public class ResetTreeCommand extends AbstractCommand {
     private void validateArguments(String[] args) throws CommandArgumentException {
         if (args.length != 2 || !"tree".equals(args[0])) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Usage: reset tree <ladybug>");
+                    "Error, reset tree <ladybug>");
         }
     }
 
@@ -69,7 +69,7 @@ public class ResetTreeCommand extends AbstractCommand {
             return Integer.parseInt(arg);
         } catch (NumberFormatException e) {
             throw new CommandArgumentException(getCommandName(),
-                    "Error: invalid ladybug ID '" + arg + "'");
+                    "Error, invalid ladybug ID '" + arg + "'");
         }
     }
 
@@ -99,7 +99,7 @@ public class ResetTreeCommand extends AbstractCommand {
         TreeExecution execution = gameState.getExecutions().get(ladybugId);
         if (execution == null) {
             throw new CommandArgumentException(getCommandName(),
-                    "Error: no tree loaded for ladybug " + ladybugId);
+                    "Error, no tree loaded for ladybug " + ladybugId);
         }
         return execution;
     }

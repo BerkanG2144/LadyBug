@@ -11,7 +11,7 @@ import model.Ladybug;
  *
  * @author ujnaa
  */
-public class ExistsPathBetween implements NodeBehavior {
+public class ExistsPathBetween implements NodeBehavior, LogArgsProvider, LogNameProvider {
     private final int x1;
     private final int y1;
     private final int x2;
@@ -38,5 +38,15 @@ public class ExistsPathBetween implements NodeBehavior {
         }
         // Ladybug is not needed for this condition, but included for interface compliance
         return board.existsPath(x1, y1, x2, y2) ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
+    }
+
+    @Override
+    public String logArgs() {
+        return x1 + "," + y1 + " " + x2 + "," + y2; // genau kein Leerzeichen nach dem Komma
+    }
+
+    @Override
+    public String logName() {
+        return "existsPath";
     }
 }

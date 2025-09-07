@@ -1,10 +1,6 @@
 package commands;
 
-import exceptions.LadybugException;
-import exceptions.BoardException;
-import exceptions.LadybugNotFoundException;
-import exceptions.CommandArgumentException;
-import exceptions.TreeParsingException;
+import exceptions.*;
 
 /**
  * Represents a CLI command in the Ladybug application.

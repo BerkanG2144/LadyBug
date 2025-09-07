@@ -2,6 +2,7 @@ package commands;
 
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
+import exceptions.QuitException;
 import exceptions.TreeParsingException;
 import main.GameState;
 
@@ -22,14 +23,16 @@ public class QuitCommand implements Command {
     }
 
     @Override
-    public void execute(String[] args) throws BoardException,
-            CommandArgumentException, TreeParsingException {
-        // No arguments expected for quit
+    public void execute(String[] args)
+            throws BoardException, CommandArgumentException, TreeParsingException, QuitException {
         if (args.length != 0) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Usage: " + getUsage());
+                    "Error, " + getUsage());
         }
+        // signal: quit program
+        throw new QuitException();
     }
+
 
     @Override
     public String getCommandName() {
@@ -41,15 +44,4 @@ public class QuitCommand implements Command {
         return "quit";
     }
 
-    /**
-     * Special exception to signal that the program should quit.
-     */
-    public static class QuitException extends Exception {
-        /**
-         * Constructs a new QuitException with a default message.
-         */
-        public QuitException() {
-            super("Program terminated by user");
-        }
-    }
 }

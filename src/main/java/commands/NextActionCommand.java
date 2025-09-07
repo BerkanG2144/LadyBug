@@ -37,7 +37,7 @@ public class NextActionCommand extends AbstractCommand {
     protected void executeInternal(String[] args)
             throws CommandArgumentException, BoardException, LadybugNotFoundException, LadybugException {
         if (args.length != 1 || !"action".equals(args[0])) {
-            throw new CommandArgumentException(getCommandName(), args, "Usage: next action");
+            throw new CommandArgumentException(getCommandName(), args, "Error, use next action");
         }
 
         requireLadybugs();
@@ -52,7 +52,7 @@ public class NextActionCommand extends AbstractCommand {
 
             TreeExecution execution = gameState.getExecutions().get(ladybugId);
             if (execution == null) {
-                System.out.println("Error: no tree loaded for ladybug " + ladybugId);
+                System.out.println("Error, no tree loaded for ladybug " + ladybugId);
                 continue;
             }
 

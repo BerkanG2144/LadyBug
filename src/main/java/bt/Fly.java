@@ -14,7 +14,7 @@ import model.Position;
  *
  * @author ujnaa
  */
-public class Fly implements NodeBehavior {
+public class Fly implements NodeBehavior, LogArgsProvider  {
     private final int x;
     private final int y;
 
@@ -36,6 +36,11 @@ public class Fly implements NodeBehavior {
         }
         Position target = new Position(x, y);
         return board.flyTo(ladybug, target) ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
+    }
+
+    @Override
+    public String logArgs() {
+        return x + "," + y; // genau kein Leerzeichen nach dem Komma
     }
 }
 

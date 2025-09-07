@@ -35,7 +35,7 @@ public abstract class AbstractCommand implements Command {
      */
     protected void requireBoard() throws BoardException {
         if (gameState.getBoard() == null) {
-            throw new BoardException("Error: no board loaded");
+            throw new BoardException("Error, no board loaded");
         }
     }
 

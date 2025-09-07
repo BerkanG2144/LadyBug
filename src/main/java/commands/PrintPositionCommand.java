@@ -36,12 +36,12 @@ public class PrintPositionCommand implements Command {
     public void execute(String[] args) throws BoardException,
             CommandArgumentException, TreeParsingException {
         if (args.length < 2) {
-            throw new IllegalArgumentException("Usage: print position <ladybug>");
+            throw new IllegalArgumentException("Error, print position <ladybug>");
         }
 
         Board board = state.getBoard();
         if (board == null) {
-            System.out.println("Error: no board loaded");
+            System.out.println("Error, no board loaded");
             return;
         }
 
@@ -49,7 +49,7 @@ public class PrintPositionCommand implements Command {
         Optional<Ladybug> ladybug = board.getLadybugById(ladybugId);
 
         if (ladybug.isEmpty()) {
-            System.out.println("Error: ladybug not found");
+            System.out.println("Error, ladybug not found");
             return;
         }
 

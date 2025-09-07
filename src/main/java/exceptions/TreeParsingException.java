@@ -18,12 +18,11 @@ public class TreeParsingException extends BehaviorTreeException {
      * @param invalidContent the content that could not be parsed
      */
     public TreeParsingException(String message, String invalidContent) {
-        super(message);
+        super(message.startsWith("Error,") ? message : "Error, " + message);
         this.invalidContent = invalidContent;
         this.lineNumber = -1;
         this.filePath = null;
     }
-
     /**
      * Constructs a new tree parsing exception with line number.
      * @param message the detail message
@@ -31,7 +30,7 @@ public class TreeParsingException extends BehaviorTreeException {
      * @param lineNumber the line number where parsing failed
      */
     public TreeParsingException(String message, String invalidContent, int lineNumber) {
-        super(message);
+        super(message.startsWith("Error,") ? message : "Error, " + message);
         this.invalidContent = invalidContent;
         this.lineNumber = lineNumber;
         this.filePath = null;
@@ -43,8 +42,8 @@ public class TreeParsingException extends BehaviorTreeException {
      * @param filePath the path of the file that could not be parsed
      */
     public TreeParsingException(String message, Path filePath) {
-        super(String.format("Error parsing tree file '%s': %s", filePath, message));
-        this.invalidContent = filePath != null ? filePath.toString() : "";
+        super(String.format("Error, parsing tree file '%s': %s", filePath, message));
+        this.invalidContent = null;
         this.lineNumber = -1;
         this.filePath = filePath;
     }
@@ -56,12 +55,11 @@ public class TreeParsingException extends BehaviorTreeException {
      * @param cause the underlying cause
      */
     public TreeParsingException(String message, Path filePath, Throwable cause) {
-        super(String.format("Error parsing tree file '%s': %s", filePath, message), cause);
-        this.invalidContent = filePath != null ? filePath.toString() : "";
+        super(String.format("Error, parsing tree file '%s': %s", filePath, message), cause);
+        this.invalidContent = null;
         this.lineNumber = -1;
         this.filePath = filePath;
     }
-
     /**
      * Returns the content that could not be parsed.
      * @return the invalid content

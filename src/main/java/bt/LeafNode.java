@@ -44,6 +44,36 @@ public class LeafNode extends BehaviorTreeNode {
         this.kind = kind;
     }
 
+    /**
+     * Returns the output format for logging.
+     *
+     * @return the correct log
+     */
+    public String getLogArgsOrEmpty() {
+        if (behavior instanceof LogArgsProvider p) {
+            String s = p.logArgs();
+            return (s != null && !s.isEmpty()) ? " " + s : "";
+        }
+        return "";
+    }
+    /**
+     * Returns the output format for logging the name.
+     *
+     * @return the correct log
+     */
+    public String getLogNameOrDefault() {
+        if (behavior instanceof LogNameProvider p) {
+            String s = p.logName();
+            if (s != null && !s.isEmpty()) {
+                return s;
+            }
+        }
+        // Fallback wie bisher (SimpleClassName → camelCase)
+        String className = behavior.getClass().getSimpleName();
+        return className.isEmpty() ? className
+                : Character.toLowerCase(className.charAt(0)) + className.substring(1);
+    }
+
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException {
         return behavior.tick(board, ladybug);

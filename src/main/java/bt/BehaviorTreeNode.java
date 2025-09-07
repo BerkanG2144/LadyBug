@@ -1,8 +1,8 @@
 package bt;
 
 import exceptions.LadybugException;
-import model.Ladybug;
 import model.Board;
+import model.Ladybug;
 
 import java.util.ArrayList;
 import java.util.List;

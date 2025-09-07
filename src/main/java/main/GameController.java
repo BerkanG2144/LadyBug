@@ -1,15 +1,6 @@
 package main;
 
-import commands.Command;
-import commands.HeadCommand;
-import commands.ListLadybugsCommand;
-import commands.QuitCommand;
-import commands.PrintPositionCommand;
-import commands.NextActionCommand;
-import commands.LoadCommand;
-import commands.ResetTreeCommand;
-import commands.AddSiblingCommand;
-
+import commands.*;
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
 import exceptions.LadybugException;
@@ -58,30 +49,36 @@ public class GameController {
      * Handles known command exceptions and prints concise error messages.
      */
     public void run() {
-        while (true) {
-            String line = scanner.nextLine().trim();
-            if (line.isEmpty()) {
-                continue;
-            }
+        try {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
 
-            String[] parts = line.split("\\s+");
-            String name = parts[0].toLowerCase();
-            String[] args = new String[Math.max(0, parts.length - 1)];
-            if (args.length > 0) {
-                System.arraycopy(parts, 1, args, 0, args.length);
-            }
+                String[] parts = line.split("\\s+");
+                String name = parts[0].toLowerCase();
+                String[] args = new String[Math.max(0, parts.length - 1)];
+                if (args.length > 0) {
+                    System.arraycopy(parts, 1, args, 0, args.length);
+                }
 
-            Command cmd = commands.get(name);
-            if (cmd == null) {
-                System.out.println("Unknown command. Try 'help'.");
-                continue;
+                Command cmd = commands.get(name);
+                if (cmd == null) {
+                    continue;
+                }
+
+                try {
+                    cmd.execute(args);
+                } catch (exceptions.QuitException qe) {
+                    // user wants to quit → leave loop
+                    return;
+                } catch (BoardException | CommandArgumentException | TreeParsingException | LadybugException e) {
+                    System.out.println("Error, " + e.getMessage());
+                }
             }
-            try {
-                cmd.execute(args);
-            } catch (BoardException | CommandArgumentException | TreeParsingException
-                     | LadybugException e) {
-                System.out.println("Error: " + e.getMessage());
-            }
+        } finally {
+            scanner.close();
         }
     }
 

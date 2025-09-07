@@ -53,31 +53,31 @@ public class LoadCommand implements Command {
             case "board" -> loadBoard(args[1]);
             case "trees" -> loadTrees(args);
             default -> throw new CommandArgumentException(getCommandName(), args,
-                    "Unknown subcommand: " + sub + "\n" + getUsage());
+                    "Error, Unknown subcommand: " + sub + "\n" + getUsage());
         }
     }
 
     private void loadBoard(String boardPath) throws BoardException, LadybugException {
         final Path p = Path.of(boardPath);
         if (!Files.exists(p)) {
-            throw new BoardException("Board file not found: " + p);
+            throw new BoardException("Error, Board file not found: " + p);
         }
         try {
             Board board = BoardParser.parse(p.toString());
             state.setBoard(board);
         } catch (IOException e) {
-            throw new BoardException("Error reading board file " + p + ": " + e.getMessage());
+            throw new BoardException("Error, reading board file " + p + ": " + e.getMessage());
         }
     }
 
     private void loadTrees(String[] args)
             throws BoardException, CommandArgumentException, TreeParsingException, LadybugException {
         if (state.getBoard() == null) {
-            throw new BoardException("Error: no board loaded");
+            throw new BoardException("Error, no board loaded");
         }
         if (args.length < 2) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Usage: load trees <path1> [<path2> ...]");
+                    "Error, load trees <path1> [<path2> ...]");
         }
 
         String[] treePaths = new String[args.length - 1];
@@ -96,7 +96,7 @@ public class LoadCommand implements Command {
             throws TreeParsingException, LadybugException {
         final Path path = Path.of(treePath);
         if (!Files.exists(path)) {
-            throw new TreeParsingException("Tree file not found: " + path, path.toString());
+            throw new TreeParsingException("Error, Tree file not found: " + path, path.toString());
         }
 
         // Lies die Datei (für Logging) und parse aus dem String → keine IOException mehr vom Parser
@@ -106,12 +106,12 @@ public class LoadCommand implements Command {
             System.out.println(content.trim());
             tree = new MermaidParser().parse(content); // statt MermaidParser.fromFile(...)
         } catch (IOException e) {
-            throw new TreeParsingException("Error reading tree file: " + e.getMessage(), path.toString());
+            throw new TreeParsingException("Error, reading tree file: " + e.getMessage(), path.toString());
         }
 
         if (!hasActionNode(tree)) {
             throw new TreeParsingException(
-                    "Error: behavior tree must contain at least one action",
+                    "Error, behavior tree must contain at least one action",
                     path.toString());
         }
 

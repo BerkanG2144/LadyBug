@@ -1,13 +1,6 @@
 package engine;
 
-import bt.BehaviorTreeNode;
-import bt.LeafNode;
-import bt.CompositeNode;
-import bt.SequenceNode;
-import bt.ParallelNode;
-import bt.NodeStatus;
-import bt.FallbackNode;
-
+import bt.*;
 import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
@@ -138,9 +131,10 @@ public class TreeExecution {
 
         // Execute the action
         LeafNode leaf = (LeafNode) action;
-        String actionName = getLeafBehaviorName(leaf);
+        String name = leaf.getLogNameOrDefault();
+        String argsForLog = leaf.getLogArgsOrEmpty();
         NodeStatus result = leaf.getBehavior().tick(board, agent);
-        log.log(agent.getId() + " " + leaf.getId() + " " + actionName + " " + result);
+        log.log(agent.getId() + " " + leaf.getId() + " " + name + argsForLog + " " + result);
         state.setLastExecutedLeaf(leaf);
         state.getStatusCache().put(leaf.getId(), result);
         prepareNextState(state, action);
@@ -187,9 +181,12 @@ public class TreeExecution {
                 return null;
             }
 
+            // --- Conditions ---
             NodeStatus result = leaf.getBehavior().tick(board, agent);
-            String conditionName = getLeafBehaviorName(leaf);
-            log.log(agent.getId() + " " + leaf.getId() + " " + conditionName + " " + result);
+            String name = leaf.getLogNameOrDefault();
+            String args = leaf.getLogArgsOrEmpty();
+            log.log(agent.getId() + " " + leaf.getId() + " " + name + args + " " + result);
+
             state.setLastExecutedLeaf(leaf);
             state.getStatusCache().put(leaf.getId(), result);
             return null;

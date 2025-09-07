@@ -36,6 +36,6 @@ public interface CompositeNode {
      * @throws UnsupportedOperationException for unsupported position
      */
     default void addChild(int index, BehaviorTreeNode child) {
-        throw new UnsupportedOperationException("Insert at position not supported");
+        throw new UnsupportedOperationException("Error, Insert at position not supported");
     }
 }

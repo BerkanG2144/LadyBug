@@ -39,7 +39,7 @@ public class AddSiblingCommand extends AbstractCommand {
             throws BoardException, LadybugNotFoundException, CommandArgumentException {
         if (args.length != 4 || !"sibling".equals(args[0])) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Usage: add sibling <ladybug> <id> <node>");
+                    "Error, add sibling <ladybug> <id> <node>");
         }
         requireLadybugs();
         int ladybugId;
@@ -47,7 +47,7 @@ public class AddSiblingCommand extends AbstractCommand {
             ladybugId = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Error: invalid ladybug ID");
+                    "Error, invalid ladybug ID");
         }
         String nodeId = args[2];
         String nodeDefinition = args[3];
@@ -61,26 +61,26 @@ public class AddSiblingCommand extends AbstractCommand {
         BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
         if (tree == null) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Error: no tree loaded for ladybug " + ladybugId);
+                    "Error, no tree loaded for ladybug " + ladybugId);
         }
 
         // Find the target node
         BehaviorTreeNode targetNode = findNodeById(tree, nodeId);
         if (targetNode == null) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Error: node " + nodeId + " not found");
+                    "Error, node " + nodeId + " not found");
         }
 
         // Find parent of target node
         BehaviorTreeNode parentNode = findParentNode(tree, targetNode);
         if (parentNode == null) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Error: cannot add sibling to root node");
+                    "Error, cannot add sibling to root node");
         }
 
         if (!(parentNode instanceof CompositeNode)) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Error: parent node is not composite");
+                    "Error, parent node is not composite");
         }
 
         // Parse the new node definition
@@ -90,7 +90,7 @@ public class AddSiblingCommand extends AbstractCommand {
             newNode = parseNodeDefinition(nodeDefinition);
         } catch (TreeParsingException  e) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Error: invalid node definition: " + e.getMessage());
+                    "Error, invalid node definition: " + e.getMessage());
         }
 
         // Add sibling to the right of target node

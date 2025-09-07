@@ -36,7 +36,7 @@ public class HeadCommand extends AbstractCommand {
     protected void executeInternal(String[] args)
             throws BoardException, LadybugNotFoundException, CommandArgumentException {
         if (args.length != 1) {
-            throw new CommandArgumentException(getCommandName(), args, "Usage: head <ladybug>");
+            throw new CommandArgumentException(getCommandName(), args, "Error, head <ladybug>");
         }
 
         requireLadybugs(); // Prüft ob Board und Marienkäfer existieren
@@ -45,7 +45,7 @@ public class HeadCommand extends AbstractCommand {
         try {
             ladybugId = Integer.parseInt(args[0]);
         } catch (NumberFormatException e) {
-            throw new CommandArgumentException(getCommandName(), args, "Error: invalid ladybug ID");
+            throw new CommandArgumentException(getCommandName(), args, "Error, invalid ladybug ID");
         }
 
         Optional<Ladybug> ladybug = getBoard().getLadybugById(ladybugId);
@@ -57,7 +57,7 @@ public class HeadCommand extends AbstractCommand {
         TreeExecution execution = gameState.getExecutions().get(ladybugId);
         if (execution == null) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Error: no tree loaded for ladybug " + ladybugId);
+                    "Error, no tree loaded for ladybug " + ladybugId);
         }
 
         var execState = execution.stateOf(ladybug.get());   // <-- public Getter in TreeExecution (siehe unten)
@@ -74,7 +74,7 @@ public class HeadCommand extends AbstractCommand {
             BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
             if (tree == null) {
                 throw new CommandArgumentException(getCommandName(), args,
-                        "Error: no tree found for ladybug " + ladybugId);
+                        "Error, no tree found for ladybug " + ladybugId);
             }
             currentNode = tree;
         }

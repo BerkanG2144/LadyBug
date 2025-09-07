@@ -11,7 +11,7 @@ import model.Ladybug;
  *
  * @author ujnaa
  */
-public class ExistsPath implements NodeBehavior {
+public class ExistsPath implements NodeBehavior, LogArgsProvider, LogNameProvider {
     private final int x;
     private final int y;
 
@@ -31,5 +31,15 @@ public class ExistsPath implements NodeBehavior {
             return NodeStatus.FAILURE;
         }
         return board.existsPath(ladybug, x, y) ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
+    }
+
+    @Override
+    public String logArgs() {
+        return x + "," + y;
+    }
+
+    @Override
+    public String logName() {
+        return "existsPath";
     }
 }

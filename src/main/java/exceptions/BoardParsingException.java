@@ -16,7 +16,7 @@ public class BoardParsingException extends BehaviorTreeException {
      * @param filePath the path of the board file that could not be parsed
      */
     public BoardParsingException(String message, Path filePath) {
-        super(String.format("Error parsing board file '%s': %s", filePath, message));
+        super(String.format("Error, parsing board file '%s': %s", filePath, message));
         this.filePath = filePath;
     }
 
@@ -27,7 +27,7 @@ public class BoardParsingException extends BehaviorTreeException {
      * @param cause the underlying cause
      */
     public BoardParsingException(String message, Path filePath, Throwable cause) {
-        super(String.format("Error parsing board file '%s': %s", filePath, message), cause);
+        super(String.format("Error, parsing board file '%s': %s", filePath, message), cause);
         this.filePath = filePath;
     }
 

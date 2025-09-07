@@ -14,8 +14,8 @@ public class LadybugNotFoundException extends BehaviorTreeException {
      * @param ladybugId the ID of the ladybug that was not found, or -1 if no ladybugs exist
      */
     public LadybugNotFoundException(int ladybugId) {
-        super(ladybugId == -1 ? "Error: no ladybugs found"
-                : String.format("Error: ladybug not found", ladybugId));
+        super(ladybugId == -1 ? "Error, no ladybugs found"
+                : String.format("Error, ladybug not found", ladybugId));
         this.ladybugId = ladybugId;
     }
 

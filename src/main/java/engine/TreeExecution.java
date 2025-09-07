@@ -107,6 +107,7 @@ public class TreeExecution {
             currentNode = root;
             state.setCurrentNode(currentNode);
         }
+
         // Find and execute next Action
         BehaviorTreeNode action = findNextAction(currentNode, board, agent, state);
         if (action == null) {
@@ -116,16 +117,19 @@ public class TreeExecution {
                 //Tree completed, restart from root
                 state.setCurrentNode(root);
                 state.getStatusCache().clear();
-                //Try again from root
+                state.getOpenCompositeEntries().clear();
+
+                // Try to find action from fresh start
                 action = findNextAction(root, board, agent, state);
                 if (action == null) {
-                    return false; //really no action possible
+                    return false; // Really no action possible
                 }
             } else {
-                return false; //No action found and tree not completed
+                return false; // No action found and tree not completed
             }
         }
 
+        // Execute the action
         LeafNode leaf = (LeafNode) action;
         String actionName = getLeafBehaviorName(leaf);
         NodeStatus result = leaf.getBehavior().tick(board, agent);
@@ -221,7 +225,7 @@ public class TreeExecution {
             NodeStatus childResult = state.getStatusCache().get(child.getId());
             if (childResult == null && child instanceof CompositeNode) {
                 // For composite children without cached status, check their children
-                continue;
+                return null;
             }
 
             if (childResult == NodeStatus.FAILURE) {

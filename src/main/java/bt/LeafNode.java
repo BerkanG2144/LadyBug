@@ -1,5 +1,6 @@
 package bt;
 
+import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
@@ -44,7 +45,7 @@ public class LeafNode extends BehaviorTreeNode {
     }
 
     @Override
-    public NodeStatus tick(Board board, Ladybug ladybug) {
+    public NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException {
         return behavior.tick(board, ladybug);
     }
 

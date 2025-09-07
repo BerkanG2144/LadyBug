@@ -4,7 +4,7 @@ import model.Position;
 
 /**
  * Exception thrown when an invalid position is accessed on the board.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class InvalidPositionException extends BoardException {
 

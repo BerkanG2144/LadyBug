@@ -2,7 +2,7 @@ package exceptions;
 
 /**
  * Exception thrown when a behavior tree has an invalid structure.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class InvalidTreeStructureException extends BehaviorTreeException {
 

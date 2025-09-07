@@ -1,5 +1,7 @@
 package model;
 
+import exceptions.LadybugException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -21,8 +23,9 @@ public class Board {
      * Creates a new board from the provided grid data.
      *
      * @param gridData two-dimensional character array describing the field
+     * @throws LadybugException if initializing ladybugs from the grid fails
      */
-    public Board(char[][] gridData) {
+    public Board(char[][] gridData) throws LadybugException {
         this.grid = new BoardGrid(gridData);
         this.ladybugManager = new LadybugManager(grid);
         this.pathFinder = new PathFinder(grid);
@@ -209,8 +212,9 @@ public class Board {
      *
      * @param ladybug ladybug
      * @return always {@code true}
+     * @throws LadybugException if the ladybug state cannot be updated
      */
-    public boolean turnLeft(Ladybug ladybug) {
+    public boolean turnLeft(Ladybug ladybug) throws LadybugException {
         Direction newDir = ladybug.getDirection().turnLeft();
         ladybugManager.setLadybugDirection(ladybug, newDir);
         return true;
@@ -221,8 +225,9 @@ public class Board {
      *
      * @param ladybug ladybug
      * @return always {@code true}
+     * @throws LadybugException if the ladybug state cannot be updated
      */
-    public boolean turnRight(Ladybug ladybug) {
+    public boolean turnRight(Ladybug ladybug) throws LadybugException {
         Direction newDir = ladybug.getDirection().turnRight();
         ladybugManager.setLadybugDirection(ladybug, newDir);
         return true;
@@ -271,8 +276,9 @@ public class Board {
      *
      * @param ladybug ladybug
      * @return {@code true} if movement was performed; otherwise {@code false}
+     * @throws LadybugException if the move cannot be applied (e.g. invalid target/state)
      */
-    public boolean moveForward(Ladybug ladybug) {
+    public boolean moveForward(Ladybug ladybug) throws LadybugException {
         Position front = getFrontPosition(ladybug);
         if (front == null) {
             return false;
@@ -308,8 +314,9 @@ public class Board {
      * @param ladybug ladybug
      * @param target  target position (must be valid and empty)
      * @return {@code true} if the flight succeeded; otherwise {@code false}
+     * @throws LadybugException if the ladybug state cannot be updated
      */
-    public boolean flyTo(Ladybug ladybug, Position target) {
+    public boolean flyTo(Ladybug ladybug, Position target) throws LadybugException {
         if (!grid.isValidPosition(target) || getCell(target) != '.') {
             return false;
         }

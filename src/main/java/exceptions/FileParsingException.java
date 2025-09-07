@@ -4,7 +4,7 @@ import java.nio.file.Path;
 
 /**
  * Exception thrown when a file cannot be parsed.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class FileParsingException extends BehaviorTreeException {
 

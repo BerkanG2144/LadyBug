@@ -2,7 +2,7 @@ package model;
 
 /**
  * Represents a ladybug's position and direction on the board.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class LadybugPosition {
     private final Position position;

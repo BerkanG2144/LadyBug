@@ -1,8 +1,10 @@
 package commands;
 
 import bt.BehaviorTreeNode;
-import exceptions.BoardParsingException;
+import exceptions.BoardException;
 import exceptions.CommandArgumentException;
+import exceptions.TreeParsingException;
+import exceptions.LadybugException;
 import main.GameState;
 import model.Board;
 import model.Ladybug;
@@ -40,34 +42,43 @@ public class LoadCommand implements Command {
     }
 
     @Override
-    public void execute(String[] args) throws CommandArgumentException, IOException, BoardParsingException {
-        if (args.length < 2) {
+    public void execute(String[] args) throws BoardException,
+            CommandArgumentException, TreeParsingException, LadybugException {
+        if (args == null || args.length < 2) {
             throw new CommandArgumentException(getCommandName(), args, getUsage());
         }
         String sub = args[0].toLowerCase();
 
-        if ("board".equals(sub)) {
-            loadBoard(args[1]);
-        } else if ("trees".equals(sub)) {
-            loadTrees(args);
-        } else {
-            throw new IllegalArgumentException("Unknown subcommand: " + sub);
+        switch (sub) {
+            case "board" -> loadBoard(args[1]);
+            case "trees" -> loadTrees(args);
+            default -> throw new CommandArgumentException(getCommandName(), args,
+                    "Unknown subcommand: " + sub + "\n" + getUsage());
         }
     }
 
-    private void loadBoard(String boardPath) throws BoardParsingException, IOException {
-        Path p = Path.of(boardPath);
+    private void loadBoard(String boardPath) throws BoardException {
+        final Path p = Path.of(boardPath);
         if (!Files.exists(p)) {
-            throw new BoardParsingException("Board file not found", p);
+            throw new BoardException("Board file not found: " + p);
         }
-
-        Board board = BoardParser.parse(p.toString());
-        state.setBoard(board);
+        try {
+            Board board = BoardParser.parse(p.toString()); // darf IOException / BoardParsingException werfen
+            state.setBoard(board);
+        } catch (IOException e) {
+            throw new BoardException("Error reading board file " + p + ": " + e.getMessage());
+        }
+        // Keine catch(RuntimeException) → Checkstyle-konform
     }
 
-    private void loadTrees(String[] args) {
+    private void loadTrees(String[] args)
+            throws BoardException, CommandArgumentException, TreeParsingException, LadybugException {
         if (state.getBoard() == null) {
-            throw new IllegalStateException("Error: no board loaded");
+            throw new BoardException("Error: no board loaded");
+        }
+        if (args.length < 2) {
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Usage: load trees <path1> [<path2> ...]");
         }
 
         String[] treePaths = new String[args.length - 1];
@@ -82,32 +93,34 @@ public class LoadCommand implements Command {
         }
     }
 
-    private void loadSingleTree(String treePath, int index, List<LadybugPosition> allLadybugPositions) {
-        Path path = Path.of(treePath);
+    private void loadSingleTree(String treePath, int index, List<LadybugPosition> allLadybugPositions)
+            throws TreeParsingException, LadybugException {
+        final Path path = Path.of(treePath);
         if (!Files.exists(path)) {
-            throw new IllegalArgumentException("Tree file not found: " + path);
+            throw new TreeParsingException("Tree file not found: " + path, path.toString());
         }
 
+        // Lies die Datei (für Logging) und parse aus dem String → keine IOException mehr vom Parser
+        final BehaviorTreeNode tree;
         try {
             String content = Files.readString(path);
             System.out.println(content.trim());
-
-            BehaviorTreeNode tree = MermaidParser.fromFile(path.toString());
-
-            if (!hasActionNode(tree)) {
-                throw new IllegalArgumentException("Error: behavior tree must contain at least one action");
-            }
-
-            LadybugPosition position = allLadybugPositions.get(index);
-            Ladybug ladybug = new Ladybug(index + 1, position.getPosition(), position.getDirection());
-            state.getBoard().addLadybug(ladybug);
-
-            state.addTree(index + 1, tree);
-
-        } catch (java.io.IOException e) {
-            // checked Exception darfst du gezielt behandeln
-            throw new IllegalArgumentException("Error reading tree file " + path + ": " + e.getMessage(), e);
+            tree = new MermaidParser().parse(content); // statt MermaidParser.fromFile(...)
+        } catch (IOException e) {
+            throw new TreeParsingException("Error reading tree file: " + e.getMessage(), path.toString());
         }
+
+        if (!hasActionNode(tree)) {
+            throw new TreeParsingException(
+                    "Error: behavior tree must contain at least one action",
+                    path.toString());
+        }
+
+        LadybugPosition position = allLadybugPositions.get(index);
+        Ladybug ladybug = new Ladybug(index + 1, position.getPosition(), position.getDirection());
+        state.getBoard().addLadybug(ladybug);
+
+        state.addTree(index + 1, tree);
     }
 
     /**

@@ -3,6 +3,7 @@ package commands;
 import engine.TreeExecution;
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
+import exceptions.LadybugException;
 import exceptions.LadybugNotFoundException;
 import main.GameState;
 import model.Ladybug;
@@ -34,7 +35,7 @@ public class NextActionCommand extends AbstractCommand {
 
     @Override
     protected void executeInternal(String[] args)
-            throws CommandArgumentException, BoardException, LadybugNotFoundException {
+            throws CommandArgumentException, BoardException, LadybugNotFoundException, LadybugException {
         if (args.length != 1 || !"action".equals(args[0])) {
             throw new CommandArgumentException(getCommandName(), args, "Usage: next action");
         }

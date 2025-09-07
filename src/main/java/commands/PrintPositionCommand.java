@@ -1,5 +1,8 @@
 package commands;
 
+import exceptions.BoardException;
+import exceptions.CommandArgumentException;
+import exceptions.TreeParsingException;
 import main.GameState;
 import model.Board;
 import model.Ladybug;
@@ -30,7 +33,8 @@ public class PrintPositionCommand implements Command {
     }
 
     @Override
-    public void execute(String[] args) throws Exception {
+    public void execute(String[] args) throws BoardException,
+            CommandArgumentException, TreeParsingException {
         if (args.length < 2) {
             throw new IllegalArgumentException("Usage: print position <ladybug>");
         }

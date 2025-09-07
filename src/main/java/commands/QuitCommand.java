@@ -1,5 +1,8 @@
 package commands;
 
+import exceptions.BoardException;
+import exceptions.CommandArgumentException;
+import exceptions.TreeParsingException;
 import main.GameState;
 
 /**
@@ -19,15 +22,17 @@ public class QuitCommand implements Command {
     }
 
     @Override
-    public void execute(String[] args) throws Exception {
+    public void execute(String[] args) throws BoardException,
+            CommandArgumentException, TreeParsingException {
         // No arguments expected for quit
         if (args.length != 0) {
-            throw new IllegalArgumentException("Usage: quit");
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Usage: " + getUsage());
         }
 
         // Exit the program gracefully
         // Note: We don't use System.exit() as per requirements
-        throw new QuitException();
+        System.out.println("quit");
     }
 
     @Override

@@ -2,11 +2,36 @@ package model;
 
 import java.util.ArrayDeque;
 
+/**
+ * Provides pathfinding utilities for navigating the board.
+ * <p>
+ * The {@code PathFinder} uses the grid from {@link BoardGrid} to check
+ * valid moves and compute the shortest paths between positions. It supports
+ * movement based on valid cells and avoids obstacles such as walls.
+ * </p>
+ *
+ * <h2>Main responsibilities:</h2>
+ * <ul>
+ *   <li>Validate if a position can be moved into.</li>
+ *   <li>Find reachable neighbors for a given position.</li>
+ *   <li>Compute the shortest paths (e.g., using BFS) between two positions.</li>
+ * </ul>
+ *
+ * <p>Instances of this class are tied to a single {@link BoardGrid} and
+ * will update automatically when the grid changes.</p>
+ *
+ * @author ujnaa
+ */
 public class PathFinder {
     private static final int[] DX = { 0,  0, -1, 1};
     private static final int[] DY = {-1,  1,  0, 0};
     private final BoardGrid grid;
 
+    /**
+     * Creates a new {@code PathFinder} for the given grid.
+     *
+     * @param grid the board grid to operate on, must not be {@code null}
+     */
     public PathFinder(BoardGrid grid) {
         this.grid = grid;
     }

@@ -1,8 +1,10 @@
 package model;
 
+import exceptions.LadybugException;
+
 /**
  * Represents a ladybug with an ID, position, and direction.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class Ladybug {
     private final int id;
@@ -12,16 +14,18 @@ public class Ladybug {
 
     /**
      * Creates a Ladybug.
-     * @param id the unique identifier
-     * @param position the position on the board
-     * @param direction the direction the ladybug faces
+     *
+     * @param id the unique identifier (must be ≥ 1)
+     * @param position the position on the board, must not be {@code null}
+     * @param direction the direction the ladybug faces, must not be {@code null}
+     * @throws LadybugException if {@code id < 1} or any argument is {@code null}
      */
-    public Ladybug(int id, Position position, Direction direction) {
+    public Ladybug(int id, Position position, Direction direction) throws LadybugException {
         if (id < 1) {
-            throw new IllegalArgumentException("Error, invalid ladybug ID");
+            throw new LadybugException("Invalid ladybug ID: " + id);
         }
         if (position == null || direction == null) {
-            throw new IllegalArgumentException("Error, null position or direction");
+            throw new LadybugException("Null position or direction not allowed");
         }
         this.id = id;
         this.position = position;
@@ -51,14 +55,27 @@ public class Ladybug {
     public Direction getDirection() {
         return direction;
     }
-
-    public void setPosition(Position position) {
-        if (position == null) throw new IllegalArgumentException("Error, null position");
+    /**
+     * Sets a new Position.
+     * @param position new position
+     * @throws LadybugException if {@code position} is {@code null}
+     */
+    public void setPosition(Position position) throws LadybugException {
+        if (position == null) {
+            throw new LadybugException("Null position not allowed");
+        }
         this.position = position;
     }
 
-    public void setDirection(Direction direction) {
-        if (direction == null) throw new IllegalArgumentException("Error, null direction");
+    /**
+     * Sets a new Direction.
+     * @param direction new direction.
+     * @throws LadybugException if {@code direction} is {@code null}
+     */
+    public void setDirection(Direction direction) throws LadybugException {
+        if (direction == null) {
+            throw new LadybugException("Null direction not allowed");
+        }
         this.direction = direction;
     }
 

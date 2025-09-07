@@ -1,5 +1,6 @@
 package bt;
 
+import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
@@ -39,7 +40,7 @@ public class FallbackNode extends BehaviorTreeNode implements CompositeNode {
     }
 
     @Override
-    public NodeStatus tick(Board board, Ladybug ladybug) {
+    public NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException {
         for (BehaviorTreeNode child : children) {
             NodeStatus childStatus = child.tick(board, ladybug);
             if (childStatus == NodeStatus.SUCCESS) {

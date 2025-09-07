@@ -1,5 +1,6 @@
 package bt;
 
+import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
@@ -44,7 +45,7 @@ public class ParallelNode extends BehaviorTreeNode implements CompositeNode {
     }
 
     @Override
-    public NodeStatus tick(Board board, Ladybug ladybug) {
+    public NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException {
         int successCount = 0;
         for (BehaviorTreeNode child : children) {
             NodeStatus childStatus = child.tick(board, ladybug);

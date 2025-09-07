@@ -1,5 +1,6 @@
 package bt;
 
+import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
@@ -17,6 +18,7 @@ public interface NodeBehavior {
      * @param board   the game board
      * @param ladybug the ladybug agent
      * @return the execution status (SUCCESS, FAILURE, or RUNNING)
+     * @throws LadybugException if the ladybug is in an invalid state (e.g. null position/direction)
      */
-    NodeStatus tick(Board board, Ladybug ladybug);
+    NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException;
 }

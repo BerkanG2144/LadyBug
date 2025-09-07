@@ -8,6 +8,7 @@ import bt.ParallelNode;
 import bt.CompositeNode;
 import bt.FallbackNode;
 
+import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
@@ -54,7 +55,7 @@ public class TreeExecution {
         return true;
     }
 
-    public boolean tick(Board board, Ladybug agent) {
+    public boolean tick(Board board, Ladybug agent) throws LadybugException {
         ExecuteState state = stateOf(agent);
         BehaviorTreeNode currentNode = state.getCurrentNode();
 
@@ -138,7 +139,7 @@ public class TreeExecution {
         state.setCurrentNode(state.getRootNode());
     }
 
-    private BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent, ExecuteState state) {
+    private BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent, ExecuteState state) throws LadybugException {
         if (!(node instanceof LeafNode)) {
             logCompositeEntryOnce(agent, state, node);
         }

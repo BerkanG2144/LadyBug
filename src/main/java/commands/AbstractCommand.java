@@ -2,6 +2,7 @@ package commands;
 
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
+import exceptions.LadybugException;
 import exceptions.LadybugNotFoundException;
 import main.GameState;
 import model.Board;
@@ -67,9 +68,10 @@ public abstract class AbstractCommand implements Command {
      * @throws BoardException for board-related errors
      * @throws LadybugNotFoundException when a ladybug cannot be found
      * @throws CommandArgumentException for invalid command arguments
+     * @throws LadybugException if the ladybug is in an invalid state or cannot perform the action
      */
     protected abstract void executeInternal(String[] args)
-            throws BoardException, LadybugNotFoundException, CommandArgumentException;
+            throws BoardException, LadybugNotFoundException, CommandArgumentException, LadybugException;
 
 
     /**
@@ -82,6 +84,8 @@ public abstract class AbstractCommand implements Command {
             executeInternal(args);
         } catch (BoardException | LadybugNotFoundException | CommandArgumentException e) {
             System.out.println(e.getMessage());
+        } catch (LadybugException e) {
+            throw new RuntimeException(e);
         }
     }
 }

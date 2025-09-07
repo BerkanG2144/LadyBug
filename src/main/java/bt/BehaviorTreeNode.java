@@ -1,5 +1,6 @@
 package bt;
 
+import exceptions.LadybugException;
 import model.Ladybug;
 import model.Board;
 
@@ -60,8 +61,10 @@ public abstract class BehaviorTreeNode {
      * @param board   the game board
      * @param ladybug the ladybug agent
      * @return the node's execution status (SUCCESS, FAILURE, RUNNING)
+     * @throws LadybugException if the ladybug is in an invalid state (e.g. null position/direction)
+     *                          or if the action defined by this node cannot be performed
      */
-    public abstract NodeStatus tick(Board board, Ladybug ladybug);
+    public abstract NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException;
 
     /**
      * Returns the type of this node, e.g. "fallback" or "sequence".

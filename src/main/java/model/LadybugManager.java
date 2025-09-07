@@ -1,16 +1,29 @@
 package model;
 
-import java.util.*;
+import exceptions.LadybugException;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
 
 /**
  * Manages ladybugs on the board.
- * @author u-Kürzel
+ * @author ujnaa
  */
 public class LadybugManager {
     private final List<Ladybug> ladybugs;
     private final BoardGrid grid;
 
-    public LadybugManager(BoardGrid grid) {
+    /**
+     * Creates a new manager bound to the given grid and initializes
+     * ladybugs from the grid's current state.
+     *
+     * @param grid the board grid backing this manager
+     * @throws LadybugException if initializing ladybugs from the grid fails
+     */
+    public LadybugManager(BoardGrid grid) throws LadybugException {
         this.grid = grid;
         this.ladybugs = new ArrayList<>();
         initializeLadybugsFromGrid();
@@ -78,9 +91,11 @@ public class LadybugManager {
      * @param ladybug the ladybug to move
      * @param newPosition the target position
      * @param newDirection the new direction
-     * @throws IllegalArgumentException if move is invalid
+     * @throws IllegalArgumentException if the ladybug is {@code null}, the position is invalid,
+     *                                  the id already exists, or the target cell is occupied
+     * @throws LadybugException         if updating the grid or ladybug state fails
      */
-    public void moveLadybugToEmpty(Ladybug ladybug, Position newPosition, Direction newDirection) {
+    public void moveLadybugToEmpty(Ladybug ladybug, Position newPosition, Direction newDirection) throws LadybugException {
         validateLadybugMove(ladybug, newPosition);
         if (grid.getCell(newPosition) != '.') {
             throw new IllegalArgumentException("Error, target position occupied");
@@ -94,8 +109,9 @@ public class LadybugManager {
      * @param mushroomPos the mushroom position
      * @param newDirection the new direction
      * @throws IllegalArgumentException if move is invalid
+     * @throws LadybugException         if updating the grid or ladybug state fails
      */
-    public void moveLadybugToMushroom(Ladybug ladybug, Position mushroomPos, Direction newDirection) {
+    public void moveLadybugToMushroom(Ladybug ladybug, Position mushroomPos, Direction newDirection) throws LadybugException {
         validateLadybugMove(ladybug, mushroomPos);
         if (grid.getCell(mushroomPos) != 'o') {
             throw new IllegalArgumentException("Error, no mushroom to push");
@@ -107,13 +123,14 @@ public class LadybugManager {
      * Sets the direction of a ladybug and updates the grid.
      * @param ladybug the ladybug
      * @param newDirection the new direction
+     * @throws LadybugException if updating the grid or ladybug state fails
      */
-    public void setLadybugDirection(Ladybug ladybug, Direction newDirection) {
+    public void setLadybugDirection(Ladybug ladybug, Direction newDirection) throws LadybugException {
         ladybug.setDirection(newDirection);
         grid.setCell(ladybug.getPosition(), newDirection.toSymbol());
     }
 
-    private void initializeLadybugsFromGrid() {
+    private void initializeLadybugsFromGrid() throws LadybugException {
         List<LadybugPosition> positions = getLadybugsFromGrid();
         int id = 1;
         for (LadybugPosition lp : positions) {
@@ -127,17 +144,21 @@ public class LadybugManager {
             for (int x = 1; x <= grid.getWidth(); x++) {
                 Position pos = new Position(x, y);
                 char c = grid.getCell(pos);
-                try {
+
+                // Statt IllegalArgumentException zu fangen: vorher prüfen
+                if (isLadybugSymbol(c)) {
                     Direction dir = Direction.fromSymbol(c);
                     ladybugPositions.add(new LadybugPosition(pos, dir));
-                } catch (IllegalArgumentException e) {
-                    // Not a ladybug symbol, skip
                 }
             }
         }
         ladybugPositions.sort(Comparator.comparingInt((LadybugPosition b) -> b.getPosition().y())
                 .thenComparingInt(b -> b.getPosition().x()));
         return ladybugPositions;
+    }
+
+    private boolean isLadybugSymbol(char c) {
+        return c == '^' || c == 'v' || c == '<' || c == '>';
     }
 
     private void validateLadybugMove(Ladybug ladybug, Position newPosition) {
@@ -149,13 +170,18 @@ public class LadybugManager {
         }
     }
 
-    private void performMove(Ladybug ladybug, Position newPosition, Direction newDirection) {
+    private void performMove(Ladybug ladybug, Position newPosition, Direction newDirection) throws LadybugException {
         grid.setCell(ladybug.getPosition(), '.');
         ladybug.setPosition(newPosition);
         ladybug.setDirection(newDirection);
         grid.setCell(newPosition, newDirection.toSymbol());
     }
 
+    /**
+     * Removes all ladybugs from the grid and internal list,
+     * resetting their cells to '.' without re-creating objects.
+     * Intended for re-initialization via load commands.
+     */
     public void clearAllLadybugs() {
         // Entferne alle Marienkäfer-Symbole vom Grid und setze auf '.' zurück
         for (Ladybug ladybug : ladybugs) {

@@ -12,8 +12,24 @@ import parser.MermaidParser;
 
 import java.util.Optional;
 
+/**
+ * CLI command that adds a sibling node to an existing node in a ladybug's behavior tree.
+ * <p>
+ * Usage: {@code add sibling <ladybug> <id> <node>}
+ * <ul>
+ *   <li>{@code <ladybug>}: numeric id of the ladybug</li>
+ *   <li>{@code <id>}: id of the existing target node</li>
+ *   <li>{@code <node>}: single-node Mermaid definition to insert as the right sibling</li>
+ * </ul>
+ * @author ujnaa
+ */
 public class AddSiblingCommand extends AbstractCommand {
 
+    /**
+     * Creates a new {@link AddSiblingCommand}.
+     *
+     * @param state shared game state; must not be {@code null}
+     */
     public AddSiblingCommand(GameState state) {
         super(state);
     }
@@ -108,20 +124,27 @@ public class AddSiblingCommand extends AbstractCommand {
         return null;
     }
 
+//    private BehaviorTreeNode parseNodeDefinition(String nodeDefinition) throws TreeParsingException {
+//        // Create a minimal mermaid structure to parse the single node
+//        String mermaidContent = "flowchart TD\n    " + nodeDefinition;
+//
+//        try {
+//            MermaidParser parser = new MermaidParser();
+//            BehaviorTreeNode parsedTree = parser.parse(mermaidContent);
+//
+//            // The parsed tree should have exactly one node (the root)
+//            // Since we're parsing a single node definition, return that node
+//            return parsedTree;
+//        } catch (Exception e) {
+//            throw new TreeParsingException("Invalid node definition", nodeDefinition);
+//        }
+//    }
+
     private BehaviorTreeNode parseNodeDefinition(String nodeDefinition) throws TreeParsingException {
-        // Create a minimal mermaid structure to parse the single node
         String mermaidContent = "flowchart TD\n    " + nodeDefinition;
-
-        try {
-            MermaidParser parser = new MermaidParser();
-            BehaviorTreeNode parsedTree = parser.parse(mermaidContent);
-
-            // The parsed tree should have exactly one node (the root)
-            // Since we're parsing a single node definition, return that node
-            return parsedTree;
-        } catch (Exception e) {
-            throw new TreeParsingException("Invalid node definition", nodeDefinition);
-        }
+        MermaidParser parser = new MermaidParser();
+        // Let TreeParsingException propagate; do not catch generic Exception.
+        return parser.parse(mermaidContent);
     }
 
     private void addSiblingToParent(CompositeNode parent, BehaviorTreeNode targetNode, BehaviorTreeNode newNode)

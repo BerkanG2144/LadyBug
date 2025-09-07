@@ -1,5 +1,6 @@
 package bt;
 
+import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 import model.Position;
@@ -29,7 +30,7 @@ public class Fly implements NodeBehavior {
     }
 
     @Override
-    public NodeStatus tick(Board board, Ladybug ladybug) {
+    public NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException {
         if (board == null || ladybug == null) {
             return NodeStatus.FAILURE;
         }

@@ -2,10 +2,8 @@ package model;
 
 import exceptions.LadybugException;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 
 
 /**
@@ -58,9 +56,12 @@ public class LadybugManager {
         if (id < 1) {
             throw new IllegalArgumentException("Error, invalid ladybug ID");
         }
-        return ladybugs.stream()
-                .filter(lb -> lb.getId() == id)
-                .findFirst();
+        for (Ladybug lb : ladybugs) {
+            if (lb.getId() == id) {
+                return Optional.of(lb);
+            }
+        }
+        return Optional.empty();
     }
 
     /**
@@ -68,10 +69,12 @@ public class LadybugManager {
      * @return list of sorted IDs
      */
     public List<Integer> listLadybugsIds() {
-        return ladybugs.stream()
-                .map(Ladybug::getId)
-                .sorted()
-                .toList();
+        List<Integer> result = new ArrayList<>();
+        for (Ladybug ladybug : ladybugs) {
+            result.add(ladybug.getId());
+        }
+        Collections.sort(result);
+        return result;
     }
 
     /**
@@ -79,11 +82,13 @@ public class LadybugManager {
      * @return list of ladybug positions
      */
     public List<LadybugPosition> getLadybugList() {
-        return ladybugs.stream()
-                .map(lb -> new LadybugPosition(lb.getPosition(), lb.getDirection()))
-                .sorted(Comparator.comparingInt((LadybugPosition b) -> b.getPosition().y())
-                        .thenComparingInt(b -> b.getPosition().x()))
-                .toList();
+        List<LadybugPosition> result = new ArrayList<>();
+        for (Ladybug lb : ladybugs) {
+            result.add(new LadybugPosition(lb.getPosition(), lb.getDirection()));
+        }
+        result.sort(Comparator.comparingInt((LadybugPosition b) -> b.getPosition().y())
+                .thenComparingInt(b -> b.getPosition().x()));
+        return result;
     }
 
     /**
@@ -187,12 +192,6 @@ public class LadybugManager {
         for (Ladybug ladybug : ladybugs) {
             grid.setCell(ladybug.getPosition(), '.');
         }
-
-        // Lösche alle Marienkäfer aus der Liste
         ladybugs.clear();
-
-        // Lade die ursprünglichen Marienkäfer-Positionen vom Grid neu
-        // (aber erstelle noch keine Ladybug-Objekte)
-        // Das wird später im LoadCommand gemacht
     }
 }

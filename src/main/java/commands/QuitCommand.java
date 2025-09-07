@@ -29,10 +29,6 @@ public class QuitCommand implements Command {
             throw new CommandArgumentException(getCommandName(), args,
                     "Usage: " + getUsage());
         }
-
-        // Exit the program gracefully
-        // Note: We don't use System.exit() as per requirements
-        System.out.println("quit");
     }
 
     @Override

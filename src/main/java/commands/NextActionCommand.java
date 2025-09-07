@@ -56,8 +56,7 @@ public class NextActionCommand extends AbstractCommand {
                 continue;
             }
 
-            // Execute one tick of the behavior tree for this ladybug
-            boolean actionExecuted = execution.tick(getBoard(), ladybug.get());
+            execution.tick(getBoard(), ladybug.get());
 
             // Print the board after this ladybug's action
             getBoard().print();

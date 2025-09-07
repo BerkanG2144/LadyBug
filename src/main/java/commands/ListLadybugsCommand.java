@@ -1,11 +1,12 @@
 package commands;
-import main.GameState;
 
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
 import exceptions.LadybugNotFoundException;
+import main.GameState;
+
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Command to list all ladybugs on the board by their IDs.
@@ -32,18 +33,15 @@ public class ListLadybugsCommand extends AbstractCommand {
     protected void executeInternal(String[] args)
             throws BoardException, LadybugNotFoundException, CommandArgumentException {
 
-        // This command doesn't expect any arguments
-        if (args.length != 0) {
-            throw new CommandArgumentException(getCommandName(), args,
-                    "Usage: list ladybugs (no arguments expected)");
-        }
 
         requireLadybugs(); // Validation aus AbstractCommand
 
         List<Integer> ids = getBoard().listLadybugsIds();
-        String result = ids.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(" "));
+        List<String> stringIds = new ArrayList<>();
+        for (Integer id : ids) {
+            stringIds.add(String.valueOf(id));
+        }
+        String result = String.join(" ", stringIds);
         System.out.println(result);
     }
 

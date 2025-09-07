@@ -3,8 +3,8 @@ package commands;
 import bt.BehaviorTreeNode;
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
-import exceptions.TreeParsingException;
 import exceptions.LadybugException;
+import exceptions.TreeParsingException;
 import main.GameState;
 import model.Board;
 import model.Ladybug;
@@ -57,18 +57,17 @@ public class LoadCommand implements Command {
         }
     }
 
-    private void loadBoard(String boardPath) throws BoardException {
+    private void loadBoard(String boardPath) throws BoardException, LadybugException {
         final Path p = Path.of(boardPath);
         if (!Files.exists(p)) {
             throw new BoardException("Board file not found: " + p);
         }
         try {
-            Board board = BoardParser.parse(p.toString()); // darf IOException / BoardParsingException werfen
+            Board board = BoardParser.parse(p.toString());
             state.setBoard(board);
         } catch (IOException e) {
             throw new BoardException("Error reading board file " + p + ": " + e.getMessage());
         }
-        // Keine catch(RuntimeException) → Checkstyle-konform
     }
 
     private void loadTrees(String[] args)

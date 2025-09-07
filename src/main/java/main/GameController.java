@@ -1,19 +1,10 @@
 package main;
 
-import commands.AddSiblingCommand;
-import commands.Command;
-import commands.HeadCommand;
-import commands.ListLadybugsCommand;
-import commands.LoadCommand;
-import commands.NextActionCommand;
-import commands.PrintPositionCommand;
-import commands.QuitCommand;
-import commands.ResetTreeCommand;
+import commands.*;
+import exceptions.BoardException;
 import exceptions.CommandArgumentException;
 import exceptions.LadybugException;
 import exceptions.TreeParsingException;
-import exceptions.BoardException;
-
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,9 +49,7 @@ public class GameController {
      * Handles known command exceptions and prints concise error messages.
      */
     public void run() {
-        System.out.println("LadyBug");
         while (true) {
-            System.out.print("> ");
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) {
                 continue;

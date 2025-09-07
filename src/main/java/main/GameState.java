@@ -1,6 +1,7 @@
 package main;
 
 import bt.BehaviorTreeNode;
+import engine.Logger;
 import engine.TreeExecution;
 import model.Board;
 import model.BoardGrid;
@@ -123,7 +124,6 @@ public class GameState {
         ladybugTrees.put(ladybugId, tree);
         executions.put(ladybugId, new TreeExecution(tree, System.out::println));
     }
-
     /**
      * Returns the mapping of ladybug IDs to their behavior trees.
      *

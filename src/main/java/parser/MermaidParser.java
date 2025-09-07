@@ -1,36 +1,11 @@
 package parser;
 
-import bt.BehaviorTreeNode;
-import bt.CompositeNode;
-import bt.SequenceNode;
-import bt.FallbackNode;
-import bt.ParallelNode;
-import bt.ExistsPath;
-import bt.AtEdge;
-import bt.TakeLeaf;
-import bt.TreeFront;
-import bt.ExistsPathBetween;
-import bt.MushroomFront;
-import bt.PlaceLeaf;
-import bt.TurnLeft;
-import bt.TurnRight;
-import bt.Fly;
-import bt.LeafFront;
-import bt.LeafNode;
-import bt.NodeBehavior;
-import bt.Move;
+import bt.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -175,7 +150,14 @@ public class MermaidParser {
                 }
                 ((CompositeNode) parent).addChild(child);
 
-                parentCount.merge(childId, 1, Integer::sum);
+                // Ersetze parentCount.merge() durch manuelle Logik
+                Integer currentCount = parentCount.get(childId);
+                if (currentCount == null) {
+                    parentCount.put(childId, 1);
+                } else {
+                    parentCount.put(childId, currentCount + 1);
+                }
+
                 if (parentCount.get(childId) > 1) {
                     throw new IllegalArgumentException("Node '" + childId + "' has multiple parents");
                 }
@@ -193,7 +175,9 @@ public class MermaidParser {
         }
 
         Set<String> children = new HashSet<>();
-        connections.values().forEach(children::addAll);
+        for (List<String> childList : connections.values()) {
+            children.addAll(childList);
+        }
 
         List<String> roots = new ArrayList<>();
         for (String id : nodes.keySet()) {

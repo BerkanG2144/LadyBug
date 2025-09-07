@@ -1,10 +1,12 @@
 package parser;
 
+import exceptions.LadybugException;
 import model.Board;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -37,11 +39,12 @@ public final class BoardParser {
      * @param path the path to the board file to parse
      * @return a new Board object created from the file content
      * @throws IOException if an I/O error occurs while reading the file
-     * @throws IllegalArgumentException if the path is null/empty, the file doesn't exist,
+     * @throws LadybugException if the path is null/empty, the file doesn't exist,
      *         the file is empty, the board has zero width, the board is not rectangular,
      *         or the file contains invalid characters
+     * @throws IllegalArgumentException no plan
      */
-    public static Board parse(String path) throws IOException {
+    public static Board parse(String path) throws IOException, LadybugException {
         if (path == null || path.trim().isEmpty()) {
             throw new IllegalArgumentException("Error, file path cannot be null or empty");
         }
@@ -52,8 +55,12 @@ public final class BoardParser {
         String content = Files.readString(Paths.get(path));
         System.out.println(content);
 
-        List<String> lines = content.replace("\r\n", "\n")
-                .replace("\r", "\n").lines().toList();
+        String[] lineArray = content.replace("\r\n", "\n")
+                .replace("\r", "\n").split("\n");
+        List<String> lines = new ArrayList<>();
+        for (String line : lineArray) {
+            lines.add(line);
+        }
 
         if (lines.isEmpty()) {
             throw new IllegalArgumentException("Error, file is empty");

@@ -30,6 +30,14 @@ public abstract class AbstractCommand implements Command {
     }
 
     /**
+     * Gets the game state.
+     * @return state
+     */
+    protected GameState getState() {
+        return gameState;
+    }
+
+    /**
      * Validates that a board is loaded.
      * @throws BoardException if no board is loaded
      */
@@ -38,6 +46,8 @@ public abstract class AbstractCommand implements Command {
             throw new BoardException("Error, no board loaded");
         }
     }
+
+
 
     /**
      * Validates that ladybugs exist on the board.

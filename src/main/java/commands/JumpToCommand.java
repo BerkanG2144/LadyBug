@@ -1,6 +1,5 @@
 package commands;
 
-import bt.BehaviorTreeNode;
 import engine.TreeExecution;
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;

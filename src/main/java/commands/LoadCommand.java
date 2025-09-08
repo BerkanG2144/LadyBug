@@ -8,7 +8,6 @@ import exceptions.TreeParsingException;
 import main.GameState;
 import model.Board;
 import model.Ladybug;
-import model.LadybugPosition;
 import parser.BoardParser;
 import parser.MermaidParser;
 
@@ -87,25 +86,17 @@ public class LoadCommand implements Command {
         if (state.getBoard() == null) {
             throw new BoardException("Error, no board loaded");
         }
-        // args: ["trees", <path1>, <path2>, ...]
-        if (args.length < 2) {
+        if (args == null || args.length < 2) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, load board <path> | load trees <path...>");
         }
-
         String[] treePaths = new String[args.length - 1];
         System.arraycopy(args, 1, treePaths, 0, args.length - 1);
-
-        // 1) Käfer-Positionen DEFENSIV kopieren (nicht die Live-Liste verwenden!)
-        List<LadybugPosition> positionsSnapshot = new java.util.ArrayList<>(state.getBoard().getLadybugList());
-
-        // 2) Anzahl prüfen
-        if (treePaths.length > positionsSnapshot.size()) {
+        int ladybugCount = state.getBoard().getLadybugList().size();
+        if (treePaths.length > ladybugCount) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, too many trees for available ladybugs");
         }
-
-        // 3) Erst ALLE Dateien einlesen/ausgeben/parsen/validieren
         BehaviorTreeNode[] parsed = new BehaviorTreeNode[treePaths.length];
         for (int i = 0; i < treePaths.length; i++) {
             final Path path = Path.of(treePaths[i]);
@@ -114,9 +105,8 @@ public class LoadCommand implements Command {
             }
             try {
                 String content = Files.readString(path);
-                System.out.println(content.trim()); // Verbatim ausgeben
+                System.out.println(content.trim()); // Verbatim-Ausgabe gefordert
                 BehaviorTreeNode tree = new MermaidParser().parse(content);
-
                 if (!hasActionNode(tree)) {
                     throw new TreeParsingException("Error, behavior tree must contain at least one action", path.toString());
                 }
@@ -125,7 +115,34 @@ public class LoadCommand implements Command {
                 throw new TreeParsingException("Error, cannot read tree file", path.toString());
             }
         }
+        Board board = state.getBoard();
+        state.clearTrees();
+        List<Ladybug> existingLadybugs = new java.util.ArrayList<>(
+                board.getLadybugManager().getLadybugs()
+        );
+        existingLadybugs.sort(
+                java.util.Comparator
+                        .comparing((Ladybug lb) -> lb.getPosition().y())
+                        .thenComparing(lb -> lb.getPosition().x())
+        );
+        if (existingLadybugs.size() > parsed.length) {
+            for (int i = parsed.length; i < existingLadybugs.size(); i++) {
+                int idToRemove = existingLadybugs.get(i).getId();
+                board.getLadybugManager().removeLadybugById(idToRemove);
+            }
+            existingLadybugs = new java.util.ArrayList<>(board.getLadybugManager().getLadybugs());
+            existingLadybugs.sort(
+                    java.util.Comparator
+                            .comparing((Ladybug lb) -> lb.getPosition().y())
+                            .thenComparing(lb -> lb.getPosition().x())
+            );
+        }
+        for (int i = 0; i < parsed.length; i++) {
+            int bugId = existingLadybugs.get(i).getId();
+            state.addTree(bugId, parsed[i]);
+        }
     }
+
 
     /**
      * Checks recursively if the tree contains at least one action node.
@@ -137,8 +154,6 @@ public class LoadCommand implements Command {
         if (node instanceof bt.LeafNode leaf) {
             return leaf.isAction();
         }
-
-        // For composite nodes: check all children
         for (BehaviorTreeNode child : node.getChildren()) {
             if (hasActionNode(child)) {
                 return true;

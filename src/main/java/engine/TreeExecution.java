@@ -214,35 +214,26 @@ public class TreeExecution {
     private BehaviorTreeNode handleLeafNode(LeafNode leaf, Board board, Ladybug agent, ExecuteState state)
             throws LadybugException {
         if (leaf.isCondition()) {
-            // Check if this condition was already evaluated in current parallel context
             if (state.getStatusCache().containsKey(leaf.getId())) {
-                // Already evaluated, don't re-evaluate
                 return null;
             }
-
-            // --- Conditions ---
             NodeStatus result = leaf.getBehavior().tick(board, agent);
             String name = leaf.getLogNameOrDefault();
             String args = leaf.getLogArgsOrEmpty();
             log.log(agent.getId() + " " + leaf.getId() + " " + name + args + " " + result);
-
             state.setLastExecutedLeaf(leaf);
             state.getStatusCache().put(leaf.getId(), result);
             return null;
         } else {
-            // Check if this action was already executed in current parallel context
             if (state.getStatusCache().containsKey(leaf.getId())) {
-                // Already executed, skip
                 return null;
             }
             return leaf; // Action found
         }
     }
-
     private BehaviorTreeNode handleSequenceNode(SequenceNode seq, Board board, Ladybug agent, ExecuteState state)
             throws LadybugException {
         for (BehaviorTreeNode child : seq.getChildren()) {
-            // Check if child already has a cached result
             NodeStatus cached = state.getStatusCache().get(child.getId());
             if (cached != null) {
                 if (cached == NodeStatus.FAILURE) {
@@ -251,26 +242,19 @@ public class TreeExecution {
                     resolveComposite(state, seq);
                     return null;
                 }
-                // SUCCESS -> continue to next child
                 continue;
             }
-
             if (child instanceof CompositeNode) {
                 logCompositeEntryOnce(agent, state, child);
             }
-
             BehaviorTreeNode next = findNextAction(child, board, agent, state);
             if (next != null) {
                 return next;
             }
-
-            // Check the actual status of the child after recursive call
             NodeStatus childResult = state.getStatusCache().get(child.getId());
             if (childResult == null && child instanceof CompositeNode) {
-                // For composite children without cached status, check their children
                 return null;
             }
-
             if (childResult == NodeStatus.FAILURE) {
                 log.log(agent.getId() + " " + seq.getId() + " " + seq.getType() + " FAILURE");
                 state.getStatusCache().put(seq.getId(), NodeStatus.FAILURE);
@@ -295,20 +279,15 @@ public class TreeExecution {
                     resolveComposite(state, fb);
                     return null;
                 }
-                // FAILURE -> continue to next child
                 continue;
             }
-
-            // Log entry for composite children that haven't been entered yet
             if (child instanceof CompositeNode) {
                 logCompositeEntryOnce(agent, state, child);
             }
-
             BehaviorTreeNode next = findNextAction(child, board, agent, state);
             if (next != null) {
                 return next;
             }
-
             NodeStatus res = state.getStatusCache().getOrDefault(child.getId(), NodeStatus.FAILURE);
             if (res == NodeStatus.SUCCESS) {
                 log.log(agent.getId() + " " + fb.getId() + " " + fb.getType() + " SUCCESS");
@@ -331,34 +310,27 @@ public class TreeExecution {
         int requiredSuccesses = par.getRequiredSuccesses();
 
         for (BehaviorTreeNode child : children) {
-            // IMPORTANT: Check if child already has a definite result in cache
             NodeStatus cached = state.getStatusCache().get(child.getId());
             if (cached != null) {
-                // This child was already evaluated in a previous tick
                 if (cached == NodeStatus.SUCCESS) {
                     succ++;
                 } else if (cached == NodeStatus.FAILURE) {
                     fail++;
                 }
-                // Skip this child - don't re-evaluate
                 continue;
             }
 
-            // Only search for action in non-evaluated children
             BehaviorTreeNode action = findNextAction(child, board, agent, state);
             if (action != null) {
-                // Found an action to execute - return it immediately
                 return action;
             }
 
-            // After recursive call, check if child now has a status
             NodeStatus childStatus = state.getStatusCache().get(child.getId());
             if (childStatus == NodeStatus.SUCCESS) {
                 succ++;
             } else if (childStatus == NodeStatus.FAILURE) {
                 fail++;
             }
-            // If childStatus is null, child is not yet decided (composite still in progress)
         }
 
         // Check if parallel node can be decided
@@ -392,16 +364,6 @@ public class TreeExecution {
         }
     }
 
-    private String getLeafBehaviorName(LeafNode leaf) {
-        String className = leaf.getBehavior().getClass().getSimpleName();
-
-        // Convert first letter to lowercase for camelCase
-        if (className.length() > 0) {
-            return Character.toLowerCase(className.charAt(0)) + className.substring(1);
-        }
-        return className;
-    }
-
     private void logCompositeEntryOnce(Ladybug agent, ExecuteState state, BehaviorTreeNode node) {
         if (node instanceof LeafNode) {
             return;
@@ -415,7 +377,6 @@ public class TreeExecution {
     private void resolveComposite(ExecuteState state, BehaviorTreeNode node) {
         state.getOpenCompositeEntries().remove(node.getId());
     }
-
     /**
      * Resets the execution state for the given agent, clearing cached node statuses,
      * current pointer and open composite entries.

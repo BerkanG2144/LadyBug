@@ -43,22 +43,20 @@ public class NextActionCommand extends AbstractCommand {
         requireLadybugs();
 
         List<Integer> ladybugIds = getBoard().listLadybugsIds();
-
         for (int ladybugId : ladybugIds) {
+            TreeExecution execution = gameState.getExecutions().get(ladybugId);
+            if (execution == null) {
+                throw new CommandArgumentException(getCommandName(), args,
+                        "Error, no tree loaded for ladybug " + ladybugId);
+            }
+
             Optional<Ladybug> ladybug = getBoard().getLadybugById(ladybugId);
             if (ladybug.isEmpty()) {
                 continue;
             }
 
-            TreeExecution execution = gameState.getExecutions().get(ladybugId);
-            if (execution == null) {
-                System.out.println("Error, no tree loaded for ladybug " + ladybugId);
-                continue;
-            }
-
             execution.tick(getBoard(), ladybug.get());
 
-            // Print the board after this ladybug's action
             getBoard().print();
         }
     }

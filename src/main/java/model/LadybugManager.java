@@ -2,11 +2,7 @@ package model;
 
 import exceptions.LadybugException;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Collections;
+import java.util.*;
 
 
 
@@ -28,7 +24,34 @@ public class LadybugManager {
     public LadybugManager(BoardGrid grid) throws LadybugException {
         this.grid = grid;
         this.ladybugs = new ArrayList<>();
-//        initializeLadybugsFromGrid();
+        initializeLadybugsFromGrid();
+    }
+
+    /**
+     * Gets ladybugs.
+     *
+     * @return ladybugs
+     * */
+    public List<Ladybug> getLadybugs() {
+        return new ArrayList<>(ladybugs);
+    }
+
+    /**
+     * Removes a ladybug by id and clears its cell on the grid.
+     * @param id for ka
+     * @return true or false
+     * */
+    public boolean removeLadybugById(int id) {
+        for (int i = 0; i < ladybugs.size(); i++) {
+            Ladybug lb = ladybugs.get(i);
+            if (lb.getId() == id) {
+                // Grid-Zelle leeren
+                grid.setCell(lb.getPosition(), '.');
+                ladybugs.remove(i);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -48,6 +71,19 @@ public class LadybugManager {
         }
         ladybugs.add(ladybug);
         grid.setCell(ladybug.getPosition(), ladybug.getDirection().toSymbol());
+    }
+
+    private void initializeLadybugsFromGrid() throws LadybugException {
+        if (!ladybugs.isEmpty()) {
+            return; // schon initialisiert
+        }
+        List<LadybugPosition> positions = getLadybugPositionsFromGrid();
+        int id = 1;
+        for (LadybugPosition lp : positions) {
+            Ladybug lb = new Ladybug(id++, lp.getPosition(), lp.getDirection());
+            ladybugs.add(lb);
+            // Grid-Symbol bleibt wie es ist
+        }
     }
 
     /**
@@ -149,6 +185,22 @@ public class LadybugManager {
         return ladybugPositions;
     }
 
+    /**
+     * Returns a list of all ladybug positions and directions found on the grid.
+     * <p>
+     * This is a convenience method that simply delegates to
+     * {@link #getLadybugPositionsFromGrid()}, allowing callers to obtain a
+     * snapshot of the board's ladybug state without activating them in the
+     * manager. The returned list is sorted by row and then column.
+     * </p>
+     *
+     * @return list of ladybug positions from the grid
+     */
+    public List<LadybugPosition> getLadybugList() {
+        return getLadybugPositionsFromGrid();
+    }
+
+
 
     private boolean isLadybugSymbol(char c) {
         return c == '^' || c == 'v' || c == '<' || c == '>';
@@ -187,11 +239,9 @@ public class LadybugManager {
 
     /**
      * Removes all ladybugs from the grid and internal list,
-     * resetting their cells to '.' without re-creating objects.
-     * Intended for re-initialization via load commands.
+     * resetting their cells to '.'. Intended for re-initialization.
      */
     public void clearAllLadybugs() {
-        // Entferne alle Marienkäfer-Symbole vom Grid und setze auf '.' zurück
         for (Ladybug ladybug : ladybugs) {
             grid.setCell(ladybug.getPosition(), '.');
         }

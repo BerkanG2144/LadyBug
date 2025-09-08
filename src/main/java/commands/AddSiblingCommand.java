@@ -56,41 +56,38 @@ public class AddSiblingCommand extends AbstractCommand {
         if (ladybug.isEmpty()) {
             throw new LadybugNotFoundException(ladybugId);
         }
-
-        // Get behavior tree for this ladybug
         BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
         if (tree == null) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, no tree loaded for ladybug " + ladybugId);
         }
-
-        // Find the target node
         BehaviorTreeNode targetNode = findNodeById(tree, nodeId);
         if (targetNode == null) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, node " + nodeId + " not found");
         }
-
-        // Find parent of target node
         BehaviorTreeNode parentNode = findParentNode(tree, targetNode);
         if (parentNode == null) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, cannot add sibling to root node");
         }
-
         if (!(parentNode instanceof CompositeNode)) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, parent node is not composite");
         }
 
-        // Parse the new node definition
-        //BehaviorTreeNode newNode = parseNodeDefinition(nodeDefinition);
         BehaviorTreeNode newNode;
         try {
             newNode = parseNodeDefinition(nodeDefinition);
-        } catch (TreeParsingException  e) {
+        } catch (TreeParsingException e) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, invalid node definition: " + e.getMessage());
+        }
+
+        // Check for duplicate node IDs
+        if (findNodeById(tree, newNode.getId()) != null) {
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error, node ID '" + newNode.getId() + "' already exists");
         }
 
         // Add sibling to the right of target node
@@ -141,10 +138,22 @@ public class AddSiblingCommand extends AbstractCommand {
 //    }
 
     private BehaviorTreeNode parseNodeDefinition(String nodeDefinition) throws TreeParsingException {
+        if (nodeDefinition == null || nodeDefinition.trim().isEmpty()) {
+            throw new TreeParsingException("Error, empty node definition", nodeDefinition);
+        }
+        if (!nodeDefinition.contains("[") || !nodeDefinition.contains("]")) {
+            throw new TreeParsingException("Error, invalid node syntax", nodeDefinition);
+        }
         String mermaidContent = "flowchart TD\n    " + nodeDefinition;
         MermaidParser parser = new MermaidParser();
         // Let TreeParsingException propagate; do not catch generic Exception.
-        return parser.parse(mermaidContent);
+        //return parser.parse(mermaidContent);
+        try {
+            return parser.parse(mermaidContent);
+        } catch (TreeParsingException e) {
+            // Re-throw with more specific error message
+            throw new TreeParsingException("Error, invalid node definition", nodeDefinition);
+        }
     }
 
     private void addSiblingToParent(CompositeNode parent, BehaviorTreeNode targetNode, BehaviorTreeNode newNode)
@@ -167,7 +176,13 @@ public class AddSiblingCommand extends AbstractCommand {
         }
 
         // Insert the new node right after the target (targetIndex + 1)
-        parent.addChild(targetIndex + 1, newNode);
+        //parent.addChild(targetIndex + 1, newNode);
+        try {
+            parent.addChild(targetIndex + 1, newNode);
+        } catch (UnsupportedOperationException e) {
+            throw new CommandArgumentException(getCommandName(),
+                    "Error, cannot insert at position - parent node does not support indexed insertion");
+        }
     }
 
     @Override

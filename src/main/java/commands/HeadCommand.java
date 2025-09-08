@@ -1,7 +1,6 @@
 package commands;
 
 import bt.BehaviorTreeNode;
-import bt.LeafNode;
 import engine.TreeExecution;
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
@@ -9,7 +8,6 @@ import exceptions.LadybugNotFoundException;
 import main.GameState;
 import model.Ladybug;
 
-import java.util.List;
 import java.util.Optional;
 
 /**

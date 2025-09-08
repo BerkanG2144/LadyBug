@@ -32,11 +32,12 @@ public class PrintPositionCommand extends AbstractCommand {
 
         requireLadybugs();
 
-        String idToken = null;
         if (args == null || args.length == 0) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, print position <ladybug>");
         }
+
+        String idToken;
         if ("position".equals(args[0])) {
             if (args.length < 2) {
                 throw new CommandArgumentException(getCommandName(), args,
@@ -47,7 +48,7 @@ public class PrintPositionCommand extends AbstractCommand {
             idToken = args[0];
         }
 
-        // 2) ID parsen
+        // ID parsen
         final int ladybugId;
         try {
             ladybugId = Integer.parseInt(idToken);
@@ -56,13 +57,12 @@ public class PrintPositionCommand extends AbstractCommand {
                     "Error, invalid ladybug ID");
         }
 
-        // 3) Ladybug holen
-        var ladybugOpt = getBoard().getLadybugById(ladybugId);
+        // Ladybug holen (aktive Ladybugs!)
+        var ladybugOpt = getState().getBoard().getLadybugManager().getLadybugById(ladybugId);
         if (ladybugOpt.isEmpty()) {
             throw new LadybugNotFoundException(ladybugId);
         }
 
-        // 4) 1-based coordinates - Position already stores 1-based coordinates
         var p = ladybugOpt.get().getPosition();
         System.out.println("(" + p.x() + ", " + p.y() + ")");
     }

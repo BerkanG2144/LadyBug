@@ -125,7 +125,7 @@ public class Board {
      * @return list of ladybug positions
      */
     public List<LadybugPosition> getLadybugList() {
-        return ladybugManager.getLadybugList();
+        return ladybugManager.getLadybugPositionsFromGrid();
     }
 
     // === Pathfinding operations (delegation) ===

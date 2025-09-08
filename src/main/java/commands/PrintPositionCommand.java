@@ -4,11 +4,6 @@ import exceptions.BoardException;
 import exceptions.CommandArgumentException;
 import exceptions.LadybugNotFoundException;
 import main.GameState;
-import model.Ladybug;
-import model.Position;
-
-import java.util.Optional;
-
 /**
  * Command to print the current position of a specific ladybug on the board.
  *
@@ -67,9 +62,9 @@ public class PrintPositionCommand extends AbstractCommand {
             throw new LadybugNotFoundException(ladybugId);
         }
 
-        // 4) 1-basige Ausgabe
+        // 4) 1-based coordinates - Position already stores 1-based coordinates
         var p = ladybugOpt.get().getPosition();
-        System.out.println("(" + (p.x() + 1) + ", " + (p.y() + 1) + ")");
+        System.out.println("(" + p.x() + ", " + p.y() + ")");
     }
 
     @Override

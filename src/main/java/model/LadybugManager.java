@@ -2,7 +2,11 @@ package model;
 
 import exceptions.LadybugException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Collections;
 
 
 
@@ -24,7 +28,7 @@ public class LadybugManager {
     public LadybugManager(BoardGrid grid) throws LadybugException {
         this.grid = grid;
         this.ladybugs = new ArrayList<>();
-        initializeLadybugsFromGrid();
+//        initializeLadybugsFromGrid();
     }
 
     /**
@@ -78,20 +82,6 @@ public class LadybugManager {
     }
 
     /**
-     * Gets all ladybug positions sorted by position.
-     * @return list of ladybug positions
-     */
-    public List<LadybugPosition> getLadybugList() {
-        List<LadybugPosition> result = new ArrayList<>();
-        for (Ladybug lb : ladybugs) {
-            result.add(new LadybugPosition(lb.getPosition(), lb.getDirection()));
-        }
-        result.sort(Comparator.comparingInt((LadybugPosition b) -> b.getPosition().y())
-                .thenComparingInt(b -> b.getPosition().x()));
-        return result;
-    }
-
-    /**
      * Moves a ladybug to an empty position.
      * @param ladybug the ladybug to move
      * @param newPosition the target position
@@ -135,22 +125,19 @@ public class LadybugManager {
         grid.setCell(ladybug.getPosition(), newDirection.toSymbol());
     }
 
-    private void initializeLadybugsFromGrid() throws LadybugException {
-        List<LadybugPosition> positions = getLadybugsFromGrid();
-        int id = 1;
-        for (LadybugPosition lp : positions) {
-            ladybugs.add(new Ladybug(id++, lp.getPosition(), lp.getDirection()));
-        }
-    }
-
-    private List<LadybugPosition> getLadybugsFromGrid() {
+    /**
+     * Gets all ladybug positions from the grid (for tree loading).
+     * This method scans the grid and returns positions where ladybugs are marked,
+     * but does NOT create actual Ladybug objects.
+     * @return list of ladybug positions found in the grid
+     */
+    public List<LadybugPosition> getLadybugPositionsFromGrid() {
         List<LadybugPosition> ladybugPositions = new ArrayList<>();
         for (int y = 1; y <= grid.getHeight(); y++) {
             for (int x = 1; x <= grid.getWidth(); x++) {
                 Position pos = new Position(x, y);
                 char c = grid.getCell(pos);
 
-                // Statt IllegalArgumentException zu fangen: vorher prüfen
                 if (isLadybugSymbol(c)) {
                     Direction dir = Direction.fromSymbol(c);
                     ladybugPositions.add(new LadybugPosition(pos, dir));
@@ -162,8 +149,24 @@ public class LadybugManager {
         return ladybugPositions;
     }
 
+
     private boolean isLadybugSymbol(char c) {
         return c == '^' || c == 'v' || c == '<' || c == '>';
+    }
+
+    /**
+     * Gets all active ladybug positions sorted by position.
+     * Only returns ladybugs that have been added via addLadybug() (i.e., when trees are loaded).
+     * @return list of active ladybug positions
+     */
+    public List<LadybugPosition> getActiveLadybugList() {
+        List<LadybugPosition> result = new ArrayList<>();
+        for (Ladybug lb : ladybugs) {
+            result.add(new LadybugPosition(lb.getPosition(), lb.getDirection()));
+        }
+        result.sort(Comparator.comparingInt((LadybugPosition b) -> b.getPosition().y())
+                .thenComparingInt(b -> b.getPosition().x()));
+        return result;
     }
 
     private void validateLadybugMove(Ladybug ladybug, Position newPosition) {

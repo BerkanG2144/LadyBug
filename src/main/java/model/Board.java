@@ -317,11 +317,24 @@ public class Board {
      * @throws LadybugException if the ladybug state cannot be updated
      */
     public boolean flyTo(Ladybug ladybug, Position target) throws LadybugException {
-        if (!grid.isValidPosition(target) || getCell(target) != '.') {
+        if (!grid.isValidPosition(target)) {
             return false;
         }
 
         Position current = ladybug.getPosition();
+
+        // Special case: flying to current position is always successful
+        if (current.equals(target)) {
+            // Optionally update direction based on delta (0,0)
+            // but since dx=0 and dy=0, direction stays the same
+            return true;
+        }
+
+        // Target must be empty for flying to a different position
+        if (getCell(target) != '.') {
+            return false;
+        }
+
         int dx = Integer.compare(target.x() - current.x(), 0);
         int dy = Integer.compare(target.y() - current.y(), 0);
         Direction newDir = Direction.fromDelta(dx, dy);

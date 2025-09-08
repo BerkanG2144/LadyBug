@@ -65,6 +65,7 @@ public class LoadCommand implements Command {
         try {
             Board board = BoardParser.parse(p.toString());
             state.setBoard(board);
+            state.getBoard().getLadybugManager().clearAllLadybugs();
         } catch (IOException e) {
             throw new BoardException("Error, reading board file " + p + ": " + e.getMessage());
         }

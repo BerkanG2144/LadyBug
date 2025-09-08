@@ -42,6 +42,7 @@ public class GameController {
         commands.put("next", new NextActionCommand(gameState));
         commands.put("add", new AddSiblingCommand(gameState));
         commands.put("quit", new QuitCommand(gameState));
+        commands.put("jump", new JumpToCommand(gameState));
     }
 
     /**

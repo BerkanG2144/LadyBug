@@ -1,20 +1,3 @@
 flowchart TD
-    Root[->] --> TryTop[?]
-    TryTop --> CheckTop([treeFront])
-    TryTop --> WalkTop[move]
-    Root --> PrepareRight[->]
-    PrepareRight --> TurnRight[turnRight]
-    PrepareRight --> TryRight[?]
-    TryRight --> CheckRight([treeFront])
-    TryRight --> WalkRight[move]
-    Root --> PrepareBack[->]
-    PrepareBack --> TurnBack[turnRight]
-    PrepareBack --> TryBack[?]
-    TryBack --> CheckBack([treeFront])
-    TryBack --> WalkBack[move]
-    Root --> PrepareLeft[->]
-    PrepareLeft --> TurnLeft[turnRight]
-    PrepareLeft --> TryLeft[?]
-    TryLeft --> CheckLeft([treeFront])
-    TryLeft --> WalkLeft[move]
-    Root --> Cheat[fly 1,1]
+    DontThink[?] --> Run[move]
+    DontThink --> AvoidWall[turnRight]

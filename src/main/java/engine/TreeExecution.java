@@ -6,6 +6,7 @@ import model.Board;
 import model.Ladybug;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -84,9 +85,47 @@ public class TreeExecution {
             return false;
         }
 
-        state.setCurrentNode(targetNode);
+        // Clear cache first
         state.getStatusCache().clear();
+        state.getOpenCompositeEntries().clear();
+
+        // Find parent and handle skipped siblings
+        BehaviorTreeNode parent = findParent(root, targetNode);
+        if (parent != null && parent instanceof CompositeNode) {
+            List<BehaviorTreeNode> children = parent.getChildren();
+            int targetIndex = children.indexOf(targetNode);
+
+            // Mark skipped siblings based on parent type
+            for (int i = 0; i < targetIndex; i++) {
+                BehaviorTreeNode skippedChild = children.get(i);
+                if (parent instanceof FallbackNode) {
+                    // Bei Fallback: übersprungene Kinder = FAILURE
+                    state.getStatusCache().put(skippedChild.getId(), NodeStatus.FAILURE);
+                } else if (parent instanceof SequenceNode) {
+                    // Bei Sequence: übersprungene Kinder = SUCCESS
+                    state.getStatusCache().put(skippedChild.getId(), NodeStatus.SUCCESS);
+                } else if (parent instanceof ParallelNode) {
+                    // Bei Parallel: übersprungene Kinder = FAILURE
+                    state.getStatusCache().put(skippedChild.getId(), NodeStatus.FAILURE);
+                }
+            }
+        }
+
+        state.setCurrentNode(targetNode);
         return true;
+    }
+
+    private BehaviorTreeNode findParent(BehaviorTreeNode current, BehaviorTreeNode target) {
+        for (BehaviorTreeNode child : current.getChildren()) {
+            if (child == target) {
+                return current;
+            }
+            BehaviorTreeNode parent = findParent(child, target);
+            if (parent != null) {
+                return parent;
+            }
+        }
+        return null;
     }
 
     /**

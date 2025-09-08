@@ -50,10 +50,22 @@ public class LoadCommand implements Command {
         String sub = args[0].toLowerCase();
 
         switch (sub) {
-            case "board" -> loadBoard(args[1]);
-            case "trees" -> loadTrees(args);
+            case "board" -> {
+                if (args.length != 2) {
+                    throw new CommandArgumentException(getCommandName(), args,
+                            "Error, load board <path> | load trees <path...>");
+                }
+                loadBoard(args[1]);
+            }
+            case "trees" -> {
+                if (args.length < 2) {
+                    throw new CommandArgumentException(getCommandName(), args,
+                            "Error, load board <path> | load trees <path...>");
+                }
+                loadTrees(args);
+            }
             default -> throw new CommandArgumentException(getCommandName(), args,
-                    "Error, Unknown subcommand: " + sub + "\n" + getUsage());
+                    "Error, unknown subcommand");
         }
     }
 
@@ -65,7 +77,6 @@ public class LoadCommand implements Command {
         try {
             Board board = BoardParser.parse(p.toString());
             state.setBoard(board);
-            state.getBoard().getLadybugManager().clearAllLadybugs();
         } catch (IOException e) {
             throw new BoardException("Error, reading board file " + p + ": " + e.getMessage());
         }
@@ -76,20 +87,54 @@ public class LoadCommand implements Command {
         if (state.getBoard() == null) {
             throw new BoardException("Error, no board loaded");
         }
+        // args: ["trees", <path1>, <path2>, ...]
         if (args.length < 2) {
             throw new CommandArgumentException(getCommandName(), args,
-                    "Error, load trees <path1> [<path2> ...]");
+                    "Error, load board <path> | load trees <path...>");
         }
 
         String[] treePaths = new String[args.length - 1];
         System.arraycopy(args, 1, treePaths, 0, args.length - 1);
-        List<LadybugPosition> allLadybugPositions = state.getBoard().getLadybugList();
 
+        // 1) Käfer-Positionen DEFENSIV kopieren (nicht die Live-Liste verwenden!)
+        List<LadybugPosition> positionsSnapshot = new java.util.ArrayList<>(state.getBoard().getLadybugList());
+
+        // 2) Anzahl prüfen
+        if (treePaths.length > positionsSnapshot.size()) {
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error, too many trees for available ladybugs");
+        }
+
+        // 3) Erst ALLE Dateien einlesen/ausgeben/parsen/validieren
+        BehaviorTreeNode[] parsed = new BehaviorTreeNode[treePaths.length];
+        for (int i = 0; i < treePaths.length; i++) {
+            final Path path = Path.of(treePaths[i]);
+            if (!Files.exists(path)) {
+                throw new TreeParsingException("Error, tree file not found", path.toString());
+            }
+            try {
+                String content = Files.readString(path);
+                System.out.println(content.trim()); // Verbatim ausgeben
+                BehaviorTreeNode tree = new MermaidParser().parse(content);
+
+                if (!hasActionNode(tree)) {
+                    throw new TreeParsingException("Error, behavior tree must contain at least one action", path.toString());
+                }
+                parsed[i] = tree;
+            } catch (IOException e) {
+                throw new TreeParsingException("Error, cannot read tree file", path.toString());
+            }
+        }
+
+        // 4) Jetzt COMMIT: alte Trees/Käfer löschen und neue anlegen
         state.clearTrees();
         state.getBoard().getLadybugManager().clearAllLadybugs();
 
-        for (int i = 0; i < treePaths.length; i++) {
-            loadSingleTree(treePaths[i], i, allLadybugPositions);
+        for (int i = 0; i < parsed.length; i++) {
+            LadybugPosition pos = positionsSnapshot.get(i);
+            Ladybug ladybug = new Ladybug(i + 1, pos.getPosition(), pos.getDirection());
+            state.getBoard().addLadybug(ladybug);
+            state.addTree(i + 1, parsed[i]);
         }
     }
 

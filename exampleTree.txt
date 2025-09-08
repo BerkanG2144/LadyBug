@@ -1,8 +1,10 @@
 flowchart TD
-    Root[->] --> Fly1[fly 1,1]
-    Root --> Fly2[fly 5,1]
-    Root --> Fly3[fly 5,5]
-    Root --> Fly4[fly 1,5]
-    Root --> Fly5[fly 5,1]
-    Root --> Fly6[fly 1,3]
-    Root --> FlyAway[fly 8,8]
+    A[?] --> B[->]
+    A --> C[=1>]
+    B --> D([treeFront])
+    B --> E[turnLeft]
+    C --> F[takeLeaf]
+    C --> G[move]
+    C --> H[->]
+    H --> I([atEdge])
+    H --> J[turnRight]

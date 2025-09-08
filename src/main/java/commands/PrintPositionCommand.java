@@ -2,9 +2,8 @@ package commands;
 
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
-import exceptions.TreeParsingException;
+import exceptions.LadybugNotFoundException;
 import main.GameState;
-import model.Board;
 import model.Ladybug;
 import model.Position;
 
@@ -20,8 +19,7 @@ import java.util.Optional;
  *
  * @author ujnaa
  */
-public class PrintPositionCommand implements Command {
-    private final GameState state;
+public class PrintPositionCommand extends AbstractCommand {
 
     /**
      * Creates a new PrintPositionCommand.
@@ -29,32 +27,49 @@ public class PrintPositionCommand implements Command {
      * @param state the game state containing board and ladybug information
      */
     public PrintPositionCommand(GameState state) {
-        this.state = state;
+        super(state);
     }
 
+
     @Override
-    public void execute(String[] args) throws BoardException,
-            CommandArgumentException, TreeParsingException {
-        if (args.length < 2) {
-            throw new IllegalArgumentException("Error, print position <ladybug>");
+    protected void executeInternal(String[] args)
+            throws BoardException, LadybugNotFoundException, CommandArgumentException {
+
+        requireLadybugs();
+
+        String idToken = null;
+        if (args == null || args.length == 0) {
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error, print position <ladybug>");
+        }
+        if ("position".equals(args[0])) {
+            if (args.length < 2) {
+                throw new CommandArgumentException(getCommandName(), args,
+                        "Error, print position <ladybug>");
+            }
+            idToken = args[1];
+        } else {
+            idToken = args[0];
         }
 
-        Board board = state.getBoard();
-        if (board == null) {
-            System.out.println("Error, no board loaded");
-            return;
+        // 2) ID parsen
+        final int ladybugId;
+        try {
+            ladybugId = Integer.parseInt(idToken);
+        } catch (NumberFormatException e) {
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error, invalid ladybug ID");
         }
 
-        int ladybugId = Integer.parseInt(args[1]);
-        Optional<Ladybug> ladybug = board.getLadybugById(ladybugId);
-
-        if (ladybug.isEmpty()) {
-            System.out.println("Error, ladybug not found");
-            return;
+        // 3) Ladybug holen
+        var ladybugOpt = getBoard().getLadybugById(ladybugId);
+        if (ladybugOpt.isEmpty()) {
+            throw new LadybugNotFoundException(ladybugId);
         }
 
-        Position pos = ladybug.get().getPosition();
-        System.out.println("(" + pos.x() + ", " + pos.y() + ")");
+        // 4) 1-basige Ausgabe
+        var p = ladybugOpt.get().getPosition();
+        System.out.println("(" + (p.x() + 1) + ", " + (p.y() + 1) + ")");
     }
 
     @Override

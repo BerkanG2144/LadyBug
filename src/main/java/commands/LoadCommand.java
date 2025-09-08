@@ -125,47 +125,6 @@ public class LoadCommand implements Command {
                 throw new TreeParsingException("Error, cannot read tree file", path.toString());
             }
         }
-
-        // 4) Jetzt COMMIT: alte Trees/Käfer löschen und neue anlegen
-        state.clearTrees();
-        state.getBoard().getLadybugManager().clearAllLadybugs();
-
-        for (int i = 0; i < parsed.length; i++) {
-            LadybugPosition pos = positionsSnapshot.get(i);
-            Ladybug ladybug = new Ladybug(i + 1, pos.getPosition(), pos.getDirection());
-            state.getBoard().addLadybug(ladybug);
-            state.addTree(i + 1, parsed[i]);
-        }
-    }
-
-    private void loadSingleTree(String treePath, int index, List<LadybugPosition> allLadybugPositions)
-            throws TreeParsingException, LadybugException {
-        final Path path = Path.of(treePath);
-        if (!Files.exists(path)) {
-            throw new TreeParsingException("Error, Tree file not found: " + path, path.toString());
-        }
-
-        // Lies die Datei (für Logging) und parse aus dem String → keine IOException mehr vom Parser
-        final BehaviorTreeNode tree;
-        try {
-            String content = Files.readString(path);
-            System.out.println(content.trim());
-            tree = new MermaidParser().parse(content); // statt MermaidParser.fromFile(...)
-        } catch (IOException e) {
-            throw new TreeParsingException("Error, reading tree file: " + e.getMessage(), path.toString());
-        }
-
-        if (!hasActionNode(tree)) {
-            throw new TreeParsingException(
-                    "Error, behavior tree must contain at least one action",
-                    path.toString());
-        }
-
-        LadybugPosition position = allLadybugPositions.get(index);
-        Ladybug ladybug = new Ladybug(index + 1, position.getPosition(), position.getDirection());
-        state.getBoard().addLadybug(ladybug);
-
-        state.addTree(index + 1, tree);
     }
 
     /**

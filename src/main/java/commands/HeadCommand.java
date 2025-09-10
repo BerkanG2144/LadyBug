@@ -76,10 +76,10 @@ public class HeadCommand extends AbstractCommand {
         }
         try {
             BehaviorTreeNode nextAction = execution.findNextActionNode(getBoard(), ladybug.get());
+
             if (nextAction != null) {
                 System.out.println(nextAction.getId());
             } else {
-                // Fallback: Wenn kein nächster Action gefunden wurde, verwende Root
                 BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
                 if (tree == null) {
                     throw new CommandArgumentException(getCommandName(), args,
@@ -88,7 +88,6 @@ public class HeadCommand extends AbstractCommand {
                 System.out.println(tree.getId());
             }
         } catch (LadybugException e) {
-            // Bei Fehlern: verwende Root als Fallback
             BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
             if (tree == null) {
                 throw new CommandArgumentException(getCommandName(), args,
@@ -97,10 +96,15 @@ public class HeadCommand extends AbstractCommand {
             System.out.println(tree.getId());
         }
     }
+
     /**
      * Hilfsmethode: Finde den Elternknoten eines gegebenen Knotens
      */
     private BehaviorTreeNode findParent(BehaviorTreeNode root, BehaviorTreeNode target) {
+        if (root == null || target == null) {
+            return null;
+        }
+
         for (BehaviorTreeNode child : root.getChildren()) {
             if (child == target) {
                 return root;

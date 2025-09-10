@@ -336,7 +336,7 @@ public class Board {
         }
         Position current = ladybug.getPosition();
         if (current.equals(target)) {
-            return true;
+            return false; // Changed: Return false if already at target position
         }
         if (getCell(target) != '.') {
             return false;

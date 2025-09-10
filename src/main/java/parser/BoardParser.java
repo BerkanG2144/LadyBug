@@ -2,11 +2,7 @@ package parser;
 
 import exceptions.BoardException;
 import exceptions.LadybugException;
-import model.Board;
-import model.BoardGrid;
-import model.LadybugPositionRegistry;
-import model.Direction;
-import model.Position;
+import model.*;
 
 import java.io.IOException;
 import java.nio.file.Files;

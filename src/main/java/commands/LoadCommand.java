@@ -1,18 +1,14 @@
 package commands;
 
 import bt.BehaviorTreeNode;
-
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
 import exceptions.LadybugException;
 import exceptions.TreeParsingException;
-
 import main.GameState;
-
+import model.Board;
 import model.Ladybug;
 import model.LadybugPosition;
-import model.Board;
-
 import parser.BoardParser;
 import parser.MermaidParser;
 

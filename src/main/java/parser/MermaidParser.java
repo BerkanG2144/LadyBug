@@ -1,35 +1,10 @@
 package parser;
 
-import bt.BehaviorTreeNode;
-import bt.CompositeNode;
-import bt.SequenceNode;
-import bt.FallbackNode;
-import bt.ParallelNode;
-import bt.ExistsPath;
-import bt.AtEdge;
-import bt.TakeLeaf;
-import bt.TreeFront;
-import bt.ExistsPathBetween;
-import bt.MushroomFront;
-import bt.PlaceLeaf;
-import bt.TurnLeft;
-import bt.TurnRight;
-import bt.Fly;
-import bt.LeafFront;
-import bt.LeafNode;
-import bt.NodeBehavior;
-import bt.Move;
+import bt.*;
 import exceptions.TreeParsingException;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,9 +34,9 @@ public class MermaidParser {
      * Parses Mermaid flowchart content into a behavior tree.
      *
      * @param mermaidContent Mermaid flowchart text to parse; must not be {@code null} or blank
-     * @return the root {@link bt.BehaviorTreeNode} of the parsed behavior tree
-     * @throws exceptions.TreeParsingException if the content is invalid or cannot be parsed
-     * @see #parse(String, java.nio.file.Path)
+     * @return the root {@link BehaviorTreeNode} of the parsed behavior tree
+     * @throws TreeParsingException if the content is invalid or cannot be parsed
+     * @see #parse(String, Path)
      */
     public BehaviorTreeNode parse(String mermaidContent) throws TreeParsingException {
         return parse(mermaidContent, null);

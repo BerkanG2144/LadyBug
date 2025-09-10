@@ -1,14 +1,17 @@
 package engine;
-
-import bt.*;
+import bt.BehaviorTreeNode;
+import bt.LeafNode;
+import bt.CompositeNode;
+import bt.SequenceNode;
+import bt.ParallelNode;
+import bt.NodeStatus;
+import bt.FallbackNode;
 import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
 /**
  * Executes a behavior tree for one or more {@link Ladybug} agents.
  * @author ujnaa
@@ -39,6 +42,45 @@ public class TreeExecution {
             state.setRootNode(root);
         }
         return state;
+    }
+    /**
+     * Advances the behavior tree for the given agent by finding and executing the next.
+     * @param board the game board (environment)
+     * @param agent the agent to tick
+     * @return {@code true} if an action was executed during this tick; {@code false} otherwise
+     * @throws LadybugException if a leaf behavior throws during execution
+     */
+    public boolean tick(Board board, Ladybug agent) throws LadybugException {
+        ExecuteState state = stateOf(agent);
+        BehaviorTreeNode currentNode = state.getCurrentNode();
+        if (currentNode == null) {
+            currentNode = root;
+            state.setCurrentNode(currentNode);
+        }
+        BehaviorTreeNode action = findNextAction(currentNode, board, agent, state);
+        if (action == null) {
+            NodeStatus rootStatus = state.getStatusCache().get(root.getId());
+            if (rootStatus != null) {
+                state.setCurrentNode(root);
+                state.getStatusCache().clear();
+                state.getOpenCompositeEntries().clear();
+                action = findNextAction(root, board, agent, state);
+                if (action == null) {
+                    return false; // Really no action possible
+                }
+            } else {
+                return false;
+            }
+        }
+        LeafNode leaf = (LeafNode) action;
+        String name = leaf.getLogNameOrDefault();
+        String argsForLog = leaf.getLogArgsOrEmpty();
+        NodeStatus result = leaf.getBehavior().tick(board, agent);
+        log.log(agent.getId() + " " + leaf.getId() + " " + name + argsForLog + " " + result);
+        state.setLastExecutedLeaf(leaf);
+        state.getStatusCache().put(leaf.getId(), result);
+        prepareNextState(state, action);
+        return true;
     }
     /**
      * Finds (but does not execute) the next actionable leaf that would be run for the agent.
@@ -144,8 +186,16 @@ public class TreeExecution {
         if (targetNode == null) {
             return false;
         }
+        List<BehaviorTreeNode> pathToTarget = findPathToNode(root, targetNode);
+        if (pathToTarget == null) {
+            return false;
+        }
         state.getStatusCache().clear();
-        state.getOpenCompositeEntries().clear();
+        for (BehaviorTreeNode ancestor : pathToTarget) {
+            if (ancestor instanceof CompositeNode && ancestor != targetNode) {
+                state.getOpenCompositeEntries().add(ancestor.getId());
+            }
+        }
         BehaviorTreeNode parent = findParent(root, targetNode);
         if (parent != null && parent instanceof CompositeNode) {
             List<BehaviorTreeNode> children = parent.getChildren();
@@ -161,8 +211,25 @@ public class TreeExecution {
                 }
             }
         }
-        state.setCurrentNode(targetNode);
+        state.setCurrentNode(root);
         return true;
+    }
+    private List<BehaviorTreeNode> findPathToNode(BehaviorTreeNode root, BehaviorTreeNode target) {
+        if (root == target) {
+            List<BehaviorTreeNode> path = new ArrayList<>();
+            path.add(root);
+            return path;
+        }
+        for (BehaviorTreeNode child : root.getChildren()) {
+            List<BehaviorTreeNode> childPath = findPathToNode(child, target);
+            if (childPath != null) {
+                List<BehaviorTreeNode> path = new ArrayList<>();
+                path.add(root);
+                path.addAll(childPath);
+                return path;
+            }
+        }
+        return null;
     }
     private BehaviorTreeNode findParent(BehaviorTreeNode current, BehaviorTreeNode target) {
         for (BehaviorTreeNode child : current.getChildren()) {
@@ -175,46 +242,6 @@ public class TreeExecution {
             }
         }
         return null;
-    }
-    /**
-     * Advances the behavior tree for the given agent by finding and executing the next.
-     * @param board the game board (environment)
-     * @param agent the agent to tick
-     * @return {@code true} if an action was executed during this tick; {@code false} otherwise
-     * @throws LadybugException if a leaf behavior throws during execution
-     */
-    public boolean tick(Board board, Ladybug agent) throws LadybugException {
-        ExecuteState state = stateOf(agent);
-        BehaviorTreeNode currentNode = state.getCurrentNode();
-        if (currentNode == null) {
-            currentNode = root;
-            state.setCurrentNode(currentNode);
-        }
-        BehaviorTreeNode action = findNextAction(currentNode, board, agent, state);
-        if (action == null) {
-            NodeStatus rootStatus = state.getStatusCache().get(root.getId());
-            if (rootStatus != null) {
-                state.setCurrentNode(root);
-                state.getStatusCache().clear();
-                state.getOpenCompositeEntries().clear();
-
-                action = findNextAction(root, board, agent, state);
-                if (action == null) {
-                    return false; // Really no action possible
-                }
-            } else {
-                return false;
-            }
-        }
-        LeafNode leaf = (LeafNode) action;
-        String name = leaf.getLogNameOrDefault();
-        String argsForLog = leaf.getLogArgsOrEmpty();
-        NodeStatus result = leaf.getBehavior().tick(board, agent);
-        log.log(agent.getId() + " " + leaf.getId() + " " + name + argsForLog + " " + result);
-        state.setLastExecutedLeaf(leaf);
-        state.getStatusCache().put(leaf.getId(), result);
-        prepareNextState(state, action);
-        return true;
     }
     private void prepareNextState(ExecuteState state, BehaviorTreeNode executedAction) {
         state.setCurrentNode(state.getRootNode());

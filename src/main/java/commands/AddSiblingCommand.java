@@ -37,12 +37,12 @@ public class AddSiblingCommand extends AbstractCommand {
     @Override
     protected void executeInternal(String[] args)
             throws BoardException, LadybugNotFoundException, CommandArgumentException {
-        if (args.length != 4 || !"sibling".equals(args[0])) {
+        if (args.length < 4 || !"sibling".equals(args[0])) {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, add sibling <ladybug> <id> <node>");
         }
         requireLadybugs();
-        int ladybugId;
+        final int ladybugId;
         try {
             ladybugId = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
@@ -50,8 +50,12 @@ public class AddSiblingCommand extends AbstractCommand {
                     "Error, invalid ladybug ID");
         }
         String nodeId = args[2];
-        String nodeDefinition = args[3];
-
+        final String nodeDefinition = String.join(" ",
+                java.util.Arrays.copyOfRange(args, 3, args.length)).trim();
+        if (nodeDefinition.isEmpty()) {
+            throw new CommandArgumentException(getCommandName(), args,
+                    "Error, empty node definition");
+        }
         Optional<Ladybug> ladybug = getBoard().getLadybugById(ladybugId);
         if (ladybug.isEmpty()) {
             throw new LadybugNotFoundException(ladybugId);
@@ -75,7 +79,6 @@ public class AddSiblingCommand extends AbstractCommand {
             throw new CommandArgumentException(getCommandName(), args,
                     "Error, parent node is not composite");
         }
-
         BehaviorTreeNode newNode;
         try {
             newNode = parseNodeDefinition(nodeDefinition);

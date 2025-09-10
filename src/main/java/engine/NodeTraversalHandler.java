@@ -21,7 +21,7 @@ public class NodeTraversalHandler {
      * Creates a new NodeTraversalHandler.
      *
      * @param stateManager the state manager
-     * @param logger the execution logger
+     * @param logger       the execution logger
      */
     public NodeTraversalHandler(ExecutionStateManager stateManager, TreeExecutionLogger logger) {
         this.stateManager = stateManager;
@@ -31,9 +31,9 @@ public class NodeTraversalHandler {
     /**
      * Processes a sequence node, executing children until one fails.
      *
-     * @param seq the sequence node
-     * @param board the game board
-     * @param agent the agent
+     * @param seq          the sequence node
+     * @param board        the game board
+     * @param agent        the agent
      * @param actionFinder function to find next action in a child
      * @return the next action node or null
      * @throws LadybugException if execution fails
@@ -94,9 +94,9 @@ public class NodeTraversalHandler {
     /**
      * Processes a fallback node, executing children until one succeeds.
      *
-     * @param fb the fallback node
-     * @param board the game board
-     * @param agent the agent
+     * @param fb           the fallback node
+     * @param board        the game board
+     * @param agent        the agent
      * @param actionFinder function to find next action in a child
      * @return the next action node or null
      * @throws LadybugException if execution fails
@@ -157,9 +157,9 @@ public class NodeTraversalHandler {
     /**
      * Processes a parallel node, executing all children.
      *
-     * @param par the parallel node
-     * @param board the game board
-     * @param agent the agent
+     * @param par          the parallel node
+     * @param board        the game board
+     * @param agent        the agent
      * @param actionFinder function to find next action in a child
      * @return the next action node or null
      * @throws LadybugException if execution fails
@@ -241,11 +241,12 @@ public class NodeTraversalHandler {
     public interface ActionFinder {
         /**
          * Functional interface for finding the next action in a node.
+         *
          * @param agent
          * @param node
          * @param board
-         * @throws LadybugException
          * @return no
+         * @throws LadybugException
          */
         BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent)
                 throws LadybugException;

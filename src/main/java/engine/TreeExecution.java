@@ -5,9 +5,7 @@ import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
-import java.util.ArrayList;
 import java.util.List;
-
 /**
  * Refactored TreeExecution that delegates responsibilities to specialized components.
  * This class now focuses on orchestration rather than implementation details.
@@ -53,6 +51,11 @@ public class TreeExecution {
      */
     public boolean tick(Board board, Ladybug agent) throws LadybugException {
         ExecuteState state = stateManager.getOrCreateState(agent);
+        NodeStatus rootStatus = stateManager.getCachedStatus(agent, root.getId());
+        if (rootStatus != null) {
+            logger.logCompositeExit(agent, root, rootStatus);
+            return false;
+        }
         BehaviorTreeNode currentNode = state.getCurrentNode();
         if (currentNode == null) {
             currentNode = root;
@@ -78,7 +81,6 @@ public class TreeExecution {
     public boolean jumpTo(Ladybug agent, String nodeId) {
         ExecuteState state = stateOf(agent);
         BehaviorTreeNode targetNode = state.findNodeById(nodeId);
-
         if (targetNode == null) {
             return false;
         }
@@ -112,9 +114,18 @@ public class TreeExecution {
     }
     private BehaviorTreeNode findNextAction(BehaviorTreeNode node, Board board, Ladybug agent)
             throws LadybugException {
-        if (!(node instanceof LeafNode)) {
-            if (stateManager.recordCompositeEntry(agent, node.getId())) {
-                logger.logCompositeEntry(agent, node);
+        if (node instanceof CompositeNode comp) {
+            // 1) Sofort-Entscheidung?
+            NodeStatus immediate = tryResolveCompositeNow(node, agent);
+            if (immediate != null) {
+                logger.logCompositeExit(agent, node, immediate);
+                stateManager.updateNodeStatus(agent, node.getId(), immediate);
+                return null;
+            }
+            boolean alreadyOpen = !stateManager.recordCompositeEntry(agent, node.getId()); // ← node
+            boolean hasProgress = hasProgressInComposite(comp, agent);                    // ← comp bleibt ok
+            if (!alreadyOpen && !hasProgress) {
+                logger.logCompositeEntry(agent, node);                                    // ← node
             }
         }
         if (node instanceof LeafNode leaf) {
@@ -126,10 +137,61 @@ public class TreeExecution {
         } else if (node instanceof ParallelNode par) {
             return traversalHandler.processParallelNode(par, board, agent, this::findNextAction);
         }
-
         return null;
     }
-
+    private NodeStatus tryResolveCompositeNow(BehaviorTreeNode node, Ladybug agent) {
+        if (!(node instanceof CompositeNode comp)) {
+            return null;
+        }
+        if (comp instanceof SequenceNode seq) {
+            for (BehaviorTreeNode c : seq.getChildren()) {
+                NodeStatus s = stateManager.getCachedStatus(agent, c.getId());
+                if (s == null) {
+                    return null;             // noch offen → nicht entscheidbar
+                }
+                if (s == NodeStatus.FAILURE) {
+                    return NodeStatus.FAILURE; // Kurzschluss
+                }
+            }
+            return NodeStatus.SUCCESS;                   // alle SUCCESS
+        }
+        if (comp instanceof FallbackNode fb) {
+            for (BehaviorTreeNode c : fb.getChildren()) {
+                NodeStatus s = stateManager.getCachedStatus(agent, c.getId());
+                if (s == null) {
+                    return null;
+                }
+                if (s == NodeStatus.SUCCESS) {
+                    return NodeStatus.SUCCESS; // Kurzschluss
+                }
+            }
+            return NodeStatus.FAILURE;                   // alle FAILURE
+        }
+        if (comp instanceof ParallelNode par) {
+            int succ = 0;
+            int fail = 0;
+            int n = par.getChildren().size();
+            int need = par.getRequiredSuccesses();
+            for (BehaviorTreeNode c : par.getChildren()) {
+                NodeStatus s = stateManager.getCachedStatus(agent, c.getId());
+                if (s == NodeStatus.SUCCESS) {
+                    succ++;
+                } else if (s == NodeStatus.FAILURE) {
+                    fail++;
+                } else {
+                    return null;                        // offen → nicht entscheidbar
+                }
+            }
+            if (succ >= need) {
+                return NodeStatus.SUCCESS;
+            }
+            if (fail > (n - need)) {
+                return NodeStatus.FAILURE;
+            }
+            return null;
+        }
+        return null;
+    }
     /**
      * Finds next actionable leaf for head command.
      * @param board the game board
@@ -139,39 +201,28 @@ public class TreeExecution {
      */
     public BehaviorTreeNode findNextActionNode(Board board, Ladybug agent) throws LadybugException {
         ExecuteState state = stateOf(agent);
-
-        // Wenn Root im Cache ist: neuer Zyklus wie in tick() -> Cache und Open-Entries leeren
         NodeStatus rootStatus = stateManager.getCachedStatus(agent, root.getId());
         if (rootStatus != null) {
             stateManager.clearStatusCache(agent);
             state.getOpenCompositeEntries().clear();
             state.setCurrentNode(root);
         }
-
         BehaviorTreeNode start = state.getCurrentNode();
         BehaviorTreeNode next = findNextActionForHead(start != null ? start : root, board, agent);
         if (next != null) {
             return next;
         }
-
-        // Falls dennoch nichts gefunden: einmal hart auf Root starten (robust ggü. inkonsistentem state)
         return findNextActionForHead(root, board, agent);
     }
 
-
     private BehaviorTreeNode handleLeafNode(LeafNode leaf, Board board, Ladybug agent)
             throws LadybugException {
-
-        // Check if already executed
         if (stateManager.getCachedStatus(agent, leaf.getId()) != null) {
             return null;
         }
-
         if (leaf.isCondition()) {
-            // Execute condition immediately
             NodeStatus result = leaf.getBehavior().tick(board, agent);
             logger.logLeafExecution(agent, leaf, result);
-
             ExecuteState state = stateManager.getOrCreateState(agent);
             state.setLastExecutedLeaf(leaf);
             stateManager.updateNodeStatus(agent, leaf.getId(), result);
@@ -181,57 +232,42 @@ public class TreeExecution {
             return leaf;
         }
     }
-
     private void executeAction(BehaviorTreeNode action, Board board, Ladybug agent, ExecuteState state)
             throws LadybugException {
-
         LeafNode leaf = (LeafNode) action;
         NodeStatus result = leaf.getBehavior().tick(board, agent);
         logger.logLeafExecution(agent, leaf, result);
-
         state.setLastExecutedLeaf(leaf);
         stateManager.updateNodeStatus(agent, leaf.getId(), result);
-
-        // Prepare for next tick
         state.setCurrentNode(root);
     }
 
     private BehaviorTreeNode handleTreeCompletion(Board board, Ladybug agent, ExecuteState state)
             throws LadybugException {
-
         NodeStatus rootStatus = stateManager.getCachedStatus(agent, root.getId());
         if (rootStatus != null) {
-            // Tree complete, restart
             state.setCurrentNode(root);
             stateManager.clearStatusCache(agent);
             state.getOpenCompositeEntries().clear();
-
             return findNextAction(root, board, agent);
         }
         return null;
     }
-
     private BehaviorTreeNode findNextActionForHead(BehaviorTreeNode node, Board board, Ladybug agent)
             throws LadybugException {
-
         if (node instanceof LeafNode leaf) {
             NodeStatus cached = stateManager.getCachedStatus(agent, leaf.getId());
             if (cached != null) {
-                // Bereits bewertet: Aktion ist damit in diesem Zyklus "verbraucht"
                 return null;
             }
-
             if (leaf.isCondition()) {
-                // Bedingung still (ohne Log) bewerten und cachen
                 NodeStatus result = leaf.getBehavior().tick(board, agent);
                 stateManager.updateNodeStatus(agent, leaf.getId(), result);
                 return null; // Composite entscheidet mit Cache weiter
             } else {
-                // Aktion noch nicht ausgeführt -> das ist die nächste Aktion
                 return leaf;
             }
         }
-
         if (node instanceof SequenceNode seq) {
             return findNextInSequence(seq, board, agent);
         } else if (node instanceof FallbackNode fb) {
@@ -242,11 +278,8 @@ public class TreeExecution {
 
         return null;
     }
-
-
     private BehaviorTreeNode findNextInSequence(SequenceNode seq, Board board, Ladybug agent)
             throws LadybugException {
-
         for (BehaviorTreeNode child : seq.getChildren()) {
             NodeStatus cached = stateManager.getCachedStatus(agent, child.getId());
             if (cached != null) {
@@ -255,13 +288,10 @@ public class TreeExecution {
                 }
                 continue; // SUCCESS -> nächstes Kind
             }
-
             BehaviorTreeNode next = findNextActionForHead(child, board, agent);
             if (next != null) {
                 return next;
             }
-
-            // Eventuell wurde gerade eine Bedingung gecached:
             cached = stateManager.getCachedStatus(agent, child.getId());
             if (cached != null) {
                 if (cached == NodeStatus.FAILURE) {
@@ -273,10 +303,8 @@ public class TreeExecution {
         }
         return null;
     }
-
     private BehaviorTreeNode findNextInFallback(FallbackNode fb, Board board, Ladybug agent)
             throws LadybugException {
-
         for (BehaviorTreeNode child : fb.getChildren()) {
             NodeStatus cached = stateManager.getCachedStatus(agent, child.getId());
             if (cached != null) {
@@ -286,7 +314,6 @@ public class TreeExecution {
                 }
                 continue; // FAILURE -> probiere nächstes Kind
             }
-
             BehaviorTreeNode next = findNextActionForHead(child, board, agent);
             if (next != null) {
                 return next;
@@ -296,7 +323,6 @@ public class TreeExecution {
                 BehaviorTreeNode deeper = findNextActionForHead(child, board, agent);
                 return deeper;
             }
-            // Bei FAILURE -> nächstes Kind
         }
         return null;
     }
@@ -309,73 +335,10 @@ public class TreeExecution {
                 if (next != null) {
                     return next;
                 }
-
-
             }
         }
         return null;
     }
-
-    private void setupJumpState(ExecuteState state, BehaviorTreeNode targetNode) {
-        // Find path to target
-        List<BehaviorTreeNode> pathToTarget = findPathToNode(root, targetNode);
-        if (pathToTarget == null) {
-            return;
-        }
-
-        // Mark ancestors as open
-        for (BehaviorTreeNode ancestor : pathToTarget) {
-            if (ancestor instanceof CompositeNode && ancestor != targetNode) {
-                state.getOpenCompositeEntries().add(ancestor.getId());
-            }
-        }
-
-        // Handle skipped siblings
-        BehaviorTreeNode parent = findParent(root, targetNode);
-        if (parent != null && parent instanceof CompositeNode) {
-            handleSkippedSiblings(parent, targetNode, state);
-        }
-    }
-
-    private void handleSkippedSiblings(BehaviorTreeNode parent, BehaviorTreeNode target, ExecuteState state) {
-        List<BehaviorTreeNode> children = parent.getChildren();
-        int targetIndex = children.indexOf(target);
-
-        for (int i = 0; i < targetIndex; i++) {
-            BehaviorTreeNode skipped = children.get(i);
-            NodeStatus skipStatus = determineSkipStatus(parent);
-            state.getStatusCache().put(skipped.getId(), skipStatus);
-        }
-    }
-
-    private NodeStatus determineSkipStatus(BehaviorTreeNode parent) {
-        if (parent instanceof FallbackNode || parent instanceof ParallelNode) {
-            return NodeStatus.FAILURE;
-        } else if (parent instanceof SequenceNode) {
-            return NodeStatus.SUCCESS;
-        }
-        return NodeStatus.FAILURE;
-    }
-
-    private List<BehaviorTreeNode> findPathToNode(BehaviorTreeNode current, BehaviorTreeNode target) {
-        if (current == target) {
-            List<BehaviorTreeNode> path = new ArrayList<>();
-            path.add(current);
-            return path;
-        }
-
-        for (BehaviorTreeNode child : current.getChildren()) {
-            List<BehaviorTreeNode> childPath = findPathToNode(child, target);
-            if (childPath != null) {
-                List<BehaviorTreeNode> path = new ArrayList<>();
-                path.add(current);
-                path.addAll(childPath);
-                return path;
-            }
-        }
-        return null;
-    }
-
     private BehaviorTreeNode findParent(BehaviorTreeNode current, BehaviorTreeNode target) {
         for (BehaviorTreeNode child : current.getChildren()) {
             if (child == target) {
@@ -387,5 +350,13 @@ public class TreeExecution {
             }
         }
         return null;
+    }
+    private boolean hasProgressInComposite(CompositeNode node, Ladybug agent) {
+        for (BehaviorTreeNode c : node.getChildren()) {
+            if (stateManager.getCachedStatus(agent, c.getId()) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -1,10 +1,35 @@
 package parser;
 
-import bt.*;
+import bt.BehaviorTreeNode;
+import bt.CompositeNode;
+import bt.SequenceNode;
+import bt.FallbackNode;
+import bt.ParallelNode;
+import bt.ExistsPath;
+import bt.AtEdge;
+import bt.TakeLeaf;
+import bt.TreeFront;
+import bt.ExistsPathBetween;
+import bt.MushroomFront;
+import bt.PlaceLeaf;
+import bt.TurnLeft;
+import bt.TurnRight;
+import bt.Fly;
+import bt.LeafFront;
+import bt.LeafNode;
+import bt.NodeBehavior;
+import bt.Move;
 import exceptions.TreeParsingException;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,7 +46,8 @@ public class MermaidParser {
 
     private static final Pattern P_FALLBACK = Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\[\\?]$");
     private static final Pattern P_SEQUENCE = Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\[->]$");
-    private static final Pattern P_PARALLEL = Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\[=(\\d+)>]$");
+    private static final Pattern P_PARALLEL =
+            Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\[=\\s*([-+]?\\d+)\\s*>]$");
     private static final Pattern P_COND = Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\(\\[([^\\]]+)]\\)$");
     private static final Pattern P_ACT  = Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\[([^\\]]+)]$");
     private static final Pattern P_EDGE = Pattern.compile("^([A-Za-z_][A-Za-z0-9_]*)\\s*-->(?:\\|[^|]*\\|\\s*)?([A-Za-z_][A-Za-z0-9_]*)$");
@@ -33,9 +59,9 @@ public class MermaidParser {
      * Parses Mermaid flowchart content into a behavior tree.
      *
      * @param mermaidContent Mermaid flowchart text to parse; must not be {@code null} or blank
-     * @return the root {@link BehaviorTreeNode} of the parsed behavior tree
-     * @throws TreeParsingException if the content is invalid or cannot be parsed
-     * @see #parse(String, Path)
+     * @return the root {@link bt.BehaviorTreeNode} of the parsed behavior tree
+     * @throws exceptions.TreeParsingException if the content is invalid or cannot be parsed
+     * @see #parse(String, java.nio.file.Path)
      */
     public BehaviorTreeNode parse(String mermaidContent) throws TreeParsingException {
         return parse(mermaidContent, null);
@@ -262,20 +288,22 @@ public class MermaidParser {
             putIfAbsentOrFail(nodes, fallbackMatcher.group(1), new FallbackNode(fallbackMatcher.group(1)), lineNo);
             return;
         }
-
         Matcher sequenceMatcher = P_SEQUENCE.matcher(token);
         if (sequenceMatcher.matches()) {
             putIfAbsentOrFail(nodes, sequenceMatcher.group(1), new SequenceNode(sequenceMatcher.group(1)), lineNo);
             return;
         }
-
         Matcher parallelMatcher = P_PARALLEL.matcher(token);
         if (parallelMatcher.matches()) {
-            putIfAbsentOrFail(nodes, parallelMatcher.group(1),
-                    new ParallelNode(parallelMatcher.group(1), Integer.parseInt(parallelMatcher.group(2))), lineNo);
+            String id = parallelMatcher.group(1);
+            int m = Integer.parseInt(parallelMatcher.group(2));
+            if (m <= 0) {
+                // klare, testfreundliche Fehlermeldung
+                throw perr("parallel threshold must be positive: " + m, lineNo);
+            }
+            putIfAbsentOrFail(nodes, id, new ParallelNode(id, m), lineNo);
             return;
         }
-
         Matcher condMatcher = P_COND.matcher(token);
         if (condMatcher.matches()) {
             String id = condMatcher.group(1);
@@ -284,23 +312,21 @@ public class MermaidParser {
             putIfAbsentOrFail(nodes, id, new LeafNode(id, behavior, LeafNode.LeafKind.CONDITION), lineNo);
             return;
         }
-
         Matcher actMatcher = P_ACT.matcher(token);
         if (actMatcher.matches()) {
             String id = actMatcher.group(1);
             String actionName = actMatcher.group(2);
-            if (!"?".equals(actionName) && !"->".equals(actionName) && !actionName.matches("=\\d+>")) {
+            if (!"?".equals(actionName)
+                    && !"->".equals(actionName)
+                    && !actionName.matches("=\\s*[-+]?\\d+\\s*>")) {
                 NodeBehavior behavior = createActionBehavior(actionName, lineNo);
                 putIfAbsentOrFail(nodes, id, new LeafNode(id, behavior, LeafNode.LeafKind.ACTION), lineNo);
             }
             return;
         }
-
-        // reine ID?
         if (token.matches("^[A-Za-z_][A-Za-z0-9_]*$")) {
             return; // nur referenziert; Definition erfolgt dort, wo ein Typ angegeben ist
         }
-
         throw perr("invalid node token at line " + lineNo + ": '" + token + "'", lineNo);
     }
 
@@ -326,38 +352,32 @@ public class MermaidParser {
         }
         return s;
     }
+
     private String extractId(String token, int lineNo) throws TreeParsingException {
         Matcher m;
-
         m = P_FALLBACK.matcher(token);
         if (m.matches()) {
             return m.group(1);
         }
-
         m = P_SEQUENCE.matcher(token);
         if (m.matches()) {
             return m.group(1);
         }
-
         m = P_PARALLEL.matcher(token);
         if (m.matches()) {
             return m.group(1);
         }
-
         m = P_COND.matcher(token);
         if (m.matches()) {
             return m.group(1);
         }
-
         m = P_ACT.matcher(token);
         if (m.matches()) {
             return m.group(1);
         }
-
         if (token.matches("^[A-Za-z_][A-Za-z0-9_]*$")) {
             return token;
         }
-
         throw perr("invalid node token at line " + lineNo + ": '" + token + "'", lineNo);
     }
 

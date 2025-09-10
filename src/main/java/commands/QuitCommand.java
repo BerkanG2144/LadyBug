@@ -2,8 +2,8 @@ package commands;
 
 import exceptions.BoardException;
 import exceptions.CommandArgumentException;
-import exceptions.QuitException;
 import exceptions.TreeParsingException;
+import exceptions.QuitException;
 import main.GameState;
 
 /**

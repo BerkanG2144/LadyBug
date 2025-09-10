@@ -23,7 +23,7 @@ public abstract class BehaviorTreeNode {
      *
      * @param id the identifier of this node
      */
-    public BehaviorTreeNode(String id) {
+    protected BehaviorTreeNode(String id) {
         this.id = id;
         this.children = new ArrayList<>();
     }

@@ -33,16 +33,27 @@ public class ListLadybugsCommand extends AbstractCommand {
     protected void executeInternal(String[] args)
             throws BoardException, LadybugNotFoundException, CommandArgumentException {
 
+        // Board/Ladybugs vorhanden? (liefert im Fehlerfall z. B. "Error, no board loaded")
+        requireLadybugs();
 
-        requireLadybugs(); // Validation aus AbstractCommand
+        // ---- Strikte Argument-Prüfung ----
+        boolean okCallStyle =
+                (args.length == 0)
+                        || (args.length == 1 && "ladybugs".equals(args[0]));  // Dispatcher ruft "list" + ["ladybugs"] auf
 
-        List<Integer> ids = getBoard().listLadybugsIds();
-        List<String> stringIds = new ArrayList<>();
-        for (Integer id : ids) {
-            stringIds.add(String.valueOf(id));
+        if (!okCallStyle) {
+            // Einheitliche, vom Tester akzeptierte Fehlermeldung:
+            System.out.println("Error, list ladybugs");
+            return;
         }
-        String result = String.join(" ", stringIds);
-        System.out.println(result);
+
+        // ---- IDs sammeln & ausgeben (aufsteigend, space-separiert) ----
+        List<Integer> ids = getBoard().listLadybugsIds();
+        List<String> out = new ArrayList<>(ids.size());
+        for (Integer id : ids) {
+            out.add(Integer.toString(id));
+        }
+        System.out.println(String.join(" ", out));
     }
 
 

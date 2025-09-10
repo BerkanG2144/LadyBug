@@ -18,30 +18,66 @@ public class Board {
     private final BoardGrid grid;
     private final LadybugManager ladybugManager;
     private final PathFinder pathFinder;
+    private final LadybugPositionRegistry ladybugRegistry;
+    private final BoardRenderer renderer = new BoardRenderer(this);
+
 
     /**
-     * Creates a new board from the provided grid data.
+     * Creates a new board from the provided grid data (legacy constructor).
+     * <p>
+     * This constructor extracts ladybug positions from mixed grid data and
+     * separates them into terrain and ladybug registry.
+     * </p>
      *
      * @param gridData two-dimensional character array describing the field
-     * @throws LadybugException if initializing ladybugs from the grid fails
+     * @throws LadybugException if initializing ladybugs fails
      */
     public Board(char[][] gridData) throws LadybugException {
-        this.grid = new BoardGrid(gridData);
+        // Legacy mode: extract ladybugs from grid data
+        LadybugPositionRegistry extractedRegistry = new LadybugPositionRegistry();
+        char[][] terrainGrid = new char[gridData.length][gridData[0].length];
+
+        for (int y = 0; y < gridData.length; y++) {
+            for (int x = 0; x < gridData[0].length; x++) {
+                char c = gridData[y][x];
+                if (BoardGrid.isLadybugSymbol(c)) {
+                    Direction direction = Direction.fromSymbol(c);
+                    Position position = new Position(x + 1, y + 1);
+                    extractedRegistry.addPosition(position, direction);
+                    terrainGrid[y][x] = '.'; // Replace with empty terrain
+                } else {
+                    terrainGrid[y][x] = c;
+                }
+            }
+        }
+
+        this.grid = new BoardGrid(terrainGrid);
+        this.ladybugRegistry = extractedRegistry;
         this.ladybugManager = new LadybugManager(grid);
         this.pathFinder = new PathFinder(grid);
     }
 
-    // === Component access methods (for GameState) ===
-
     /**
-     * Returns the underlying {@link BoardGrid}.
+     * Creates a new board with separated terrain and ladybug registry.
      *
-     * @return the grid
+     * @param terrainGrid two-dimensional character array with only terrain symbols
+     * @param ladybugRegistry registry containing initial ladybug positions
+     * @throws LadybugException if initialization fails
+     */
+    public Board(char[][] terrainGrid, LadybugPositionRegistry ladybugRegistry) throws LadybugException {
+        this.grid = new BoardGrid(terrainGrid);
+        this.ladybugRegistry = ladybugRegistry;
+        this.ladybugManager = new LadybugManager(grid);
+        this.pathFinder = new PathFinder(grid);
+    }
+    /**
+     * Returns the underlying {@link BoardGrid} containing only terrain.
+     *
+     * @return the terrain grid
      */
     public BoardGrid getGrid() {
         return grid;
     }
-
     /**
      * Returns the {@link LadybugManager}.
      *
@@ -50,47 +86,41 @@ public class Board {
     public LadybugManager getLadybugManager() {
         return ladybugManager;
     }
-
     /**
      * Returns the {@link PathFinder}.
      *
-     * @return the path finder
+     * @return the pathfinder
      */
     public PathFinder getPathFinder() {
         return pathFinder;
     }
 
-    // === Grid operations ===
-
     /**
-     * Gets the symbol at the given position.
+     * Returns the ladybug position registry containing initial positions.
+     *
+     * @return the ladybug registry
+     */
+    public LadybugPositionRegistry getLadybugRegistry() {
+        return ladybugRegistry;
+    }
+    /**
+     * Gets the terrain symbol at the given position.
      *
      * @param pos position in the grid (1-based)
-     * @return the character at that position
+     * @return the terrain character at that position
      */
     public char getCell(Position pos) {
         return grid.getCell(pos);
     }
-
     /**
-     * Sets a symbol at the given position.
+     * Sets a terrain symbol at the given position.
      *
      * @param pos    position in the grid (1-based)
-     * @param symbol character to set
+     * @param symbol terrain character to set
      */
     public void setCell(Position pos, char symbol) {
         grid.setCell(pos, symbol);
     }
-
-    /**
-     * Prints the current grid to standard output.
-     */
-    public void print() {
-        grid.print();
-    }
-
-    // === Ladybug operations (delegation) ===
-
     /**
      * Adds a ladybug to the board.
      *
@@ -118,18 +148,6 @@ public class Board {
     public List<Integer> listLadybugsIds() {
         return ladybugManager.listLadybugsIds();
     }
-
-    /**
-     * Returns a snapshot of all ladybugs including position and direction.
-     *
-     * @return list of ladybug positions
-     */
-    public List<LadybugPosition> getLadybugList() {
-        return ladybugManager.getLadybugPositionsFromGrid();
-    }
-
-    // === Pathfinding operations (delegation) ===
-
     /**
      * Checks if a path exists from the given ladybug's current position to the target cell.
      *
@@ -155,7 +173,13 @@ public class Board {
         return pathFinder.existsPath(x1, y1, x2, y2);
     }
 
-    // === Conditions ===
+    /**
+     * Checks whether the given ladybug is on any edge of the board.
+     * @return {@code true} if on an edge; otherwise {@code false}
+     */
+    public BoardRenderer getRenderer() {
+        return renderer;
+    }
 
     /**
      * Checks whether the given ladybug is on any edge of the board.
@@ -168,7 +192,6 @@ public class Board {
         int x = pos.x();
         int y = pos.y();
 
-        // at any border cell
         return x == 1 || x == grid.getWidth() || y == 1 || y == grid.getHeight();
     }
 
@@ -204,9 +227,6 @@ public class Board {
         Position front = getFrontPosition(ladybug);
         return front != null && getCell(front) == 'o';
     }
-
-    // === Actions ===
-
     /**
      * Turns the ladybug to the left.
      *
@@ -219,7 +239,6 @@ public class Board {
         ladybugManager.setLadybugDirection(ladybug, newDir);
         return true;
     }
-
     /**
      * Turns the ladybug to the right.
      *
@@ -232,7 +251,6 @@ public class Board {
         ladybugManager.setLadybugDirection(ladybug, newDir);
         return true;
     }
-
     /**
      * Places a leaf ('*') on the cell in front of the ladybug if it is empty ('.').
      *
@@ -251,7 +269,6 @@ public class Board {
         setCell(front, '*');
         return true;
     }
-
     /**
      * Removes a leaf ('*') from the cell in front of the ladybug and empties it ('.').
      *
@@ -269,14 +286,13 @@ public class Board {
         setCell(front, '.');
         return true;
     }
-
     /**
      * Moves the ladybug one cell forward. Mushrooms ('o') are pushed if possible;
      * trees ('#') block movement.
      *
      * @param ladybug ladybug
      * @return {@code true} if movement was performed; otherwise {@code false}
-     * @throws LadybugException if the move cannot be applied (e.g. invalid target/state)
+     * @throws LadybugException if the move cannot be applied
      */
     public boolean moveForward(Ladybug ladybug) throws LadybugException {
         Position front = getFrontPosition(ladybug);
@@ -288,25 +304,23 @@ public class Board {
         }
         char c = getCell(front);
         Direction direction = ladybug.getDirection();
-
         if (c == '.') {
             ladybugManager.moveLadybugToEmpty(ladybug, front, direction);
             return true;
         }
-
         if (c == 'o') {
             Position behind = calculateBehindPosition(front, direction);
             if (behind == null || getCell(behind) != '.') {
                 return false;
             }
             setCell(behind, 'o');
+            setCell(front, '.');
             ladybugManager.moveLadybugToMushroom(ladybug, front, direction);
             return true;
         }
 
         return false;
     }
-
     /**
      * Lets the ladybug fly to a free target cell and orients it according to the
      * flight direction.
@@ -320,34 +334,20 @@ public class Board {
         if (!grid.isValidPosition(target)) {
             return false;
         }
-
         Position current = ladybug.getPosition();
-
-        // Special case: flying to current position is always successful
         if (current.equals(target)) {
-            // Optionally update direction based on delta (0,0)
-            // but since dx=0 and dy=0, direction stays the same
             return true;
         }
-
-        // Target must be empty for flying to a different position
         if (getCell(target) != '.') {
             return false;
         }
-
         int dx = Integer.compare(target.x() - current.x(), 0);
         int dy = Integer.compare(target.y() - current.y(), 0);
         Direction newDir = Direction.fromDelta(dx, dy);
-
-        setCell(current, '.');
         ladybug.setPosition(target);
         ladybug.setDirection(newDir);
-        setCell(target, newDir.toSymbol());
         return true;
     }
-
-    // === Helper methods ===
-
     /**
      * Checks whether coordinates are within the grid bounds.
      *
@@ -358,7 +358,6 @@ public class Board {
     private boolean isValidCoordinate(int x, int y) {
         return x >= 1 && x <= grid.getWidth() && y >= 1 && y <= grid.getHeight();
     }
-
     /**
      * Computes the position directly in front of the ladybug.
      *
@@ -375,10 +374,8 @@ public class Board {
         if (!isValidCoordinate(newX, newY)) {
             return null;
         }
-
         return new Position(newX, newY);
     }
-
     /**
      * Computes the cell behind a given front position in the same direction,
      * if that cell is valid.

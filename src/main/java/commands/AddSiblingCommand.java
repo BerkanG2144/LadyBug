@@ -121,6 +121,22 @@ public class AddSiblingCommand extends AbstractCommand {
         return null;
     }
 
+//    private BehaviorTreeNode parseNodeDefinition(String nodeDefinition) throws TreeParsingException {
+//        // Create a minimal mermaid structure to parse the single node
+//        String mermaidContent = "flowchart TD\n    " + nodeDefinition;
+//
+//        try {
+//            MermaidParser parser = new MermaidParser();
+//            BehaviorTreeNode parsedTree = parser.parse(mermaidContent);
+//
+//            // The parsed tree should have exactly one node (the root)
+//            // Since we're parsing a single node definition, return that node
+//            return parsedTree;
+//        } catch (Exception e) {
+//            throw new TreeParsingException("Invalid node definition", nodeDefinition);
+//        }
+//    }
+
     private BehaviorTreeNode parseNodeDefinition(String nodeDefinition) throws TreeParsingException {
         if (nodeDefinition == null || nodeDefinition.trim().isEmpty()) {
             throw new TreeParsingException("Error, empty node definition", nodeDefinition);

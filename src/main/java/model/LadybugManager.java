@@ -2,12 +2,21 @@ package model;
 
 import exceptions.LadybugException;
 
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Comparator;
 
 
 /**
- * Manages ladybugs on the board.
+ * Manages ladybugs on the board without manipulating the terrain grid.
+ * <p>
+ * This manager maintains a separate list of active ladybugs and handles
+ * their movement, rotation, and lifecycle. The terrain grid remains untouched
+ * and ladybugs are rendered as overlays during board display.
+ * </p>
+ *
  * @author ujnaa
  */
 public class LadybugManager {
@@ -15,38 +24,59 @@ public class LadybugManager {
     private final BoardGrid grid;
 
     /**
-     * Creates a new manager bound to the given grid and initializes
-     * ladybugs from the grid's current state.
+     * Creates a new manager bound to the given grid.
+     * <p>
+     * Note: This constructor no longer automatically initializes ladybugs from the grid,
+     * since the grid contains only terrain. Ladybugs must be added explicitly
+     * via {@link #addLadybug(Ladybug)} or created from a registry.
+     * </p>
      *
-     * @param grid the board grid backing this manager
-     * @throws LadybugException if initializing ladybugs from the grid fails
+     * @param grid the board grid (used for position validation)
+     * @throws LadybugException if initialization fails
      */
     public LadybugManager(BoardGrid grid) throws LadybugException {
         this.grid = grid;
         this.ladybugs = new ArrayList<>();
-        initializeLadybugsFromGrid();
+        // No longer initializes from grid - grid contains only terrain!
     }
 
     /**
-     * Gets ladybugs.
+     * Gets a copy of all managed ladybugs.
      *
-     * @return ladybugs
-     * */
+     * @return list of ladybugs
+     */
     public List<Ladybug> getLadybugs() {
         return new ArrayList<>(ladybugs);
     }
 
     /**
-     * Removes a ladybug by id and clears its cell on the grid.
-     * @param id for ka
-     * @return true or false
-     * */
+     * finds ladybug at position.
+     *
+     * @param pos for specific ID
+     * @return in order
+     */
+    public Optional<Ladybug> findLadybugAt(Position pos) {
+        for (Ladybug lb : ladybugs) {
+            if (lb.getPosition().equals(pos)) {
+                return Optional.of(lb);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Removes a ladybug by ID.
+     * <p>
+     * Note: No grid manipulation needed since ladybugs are not stored in the grid.
+     * </p>
+     *
+     * @param id the ladybug ID to remove
+     * @return true if a ladybug was removed, false if not found
+     */
     public boolean removeLadybugById(int id) {
         for (int i = 0; i < ladybugs.size(); i++) {
             Ladybug lb = ladybugs.get(i);
             if (lb.getId() == id) {
-                // Grid-Zelle leeren
-                grid.setCell(lb.getPosition(), '.');
                 ladybugs.remove(i);
                 return true;
             }
@@ -56,8 +86,14 @@ public class LadybugManager {
 
     /**
      * Adds a ladybug to the manager.
+     * <p>
+     * The ladybug's position must be valid and the target cell must be terrain-accessible.
+     * No grid manipulation is performed - ladybugs exist only in the manager.
+     * </p>
+     *
      * @param ladybug the ladybug to add
-     * @throws IllegalArgumentException if ladybug is invalid or position occupied
+     * @throws IllegalArgumentException if ladybug is invalid, position is invalid,
+     *                                  or ladybug ID already exists
      */
     public void addLadybug(Ladybug ladybug) {
         if (ladybug == null || !grid.isValidPosition(ladybug.getPosition())) {
@@ -66,28 +102,20 @@ public class LadybugManager {
         if (getLadybugById(ladybug.getId()).isPresent()) {
             throw new IllegalArgumentException("Error, ladybug already exists");
         }
-        if (grid.getCell(ladybug.getPosition()) != '.') {
-            throw new IllegalArgumentException("Error, position already occupied");
-        }
-        ladybugs.add(ladybug);
-        grid.setCell(ladybug.getPosition(), ladybug.getDirection().toSymbol());
-    }
 
-    private void initializeLadybugsFromGrid() throws LadybugException {
-        if (!ladybugs.isEmpty()) {
-            return; // schon initialisiert
+        // Check if position is accessible (not a wall/tree)
+        char terrain = grid.getCell(ladybug.getPosition());
+        if (terrain == '#') {
+            throw new IllegalArgumentException("Error, cannot place ladybug on wall/tree");
         }
-        List<LadybugPosition> positions = getLadybugPositionsFromGrid();
-        int id = 1;
-        for (LadybugPosition lp : positions) {
-            Ladybug lb = new Ladybug(id++, lp.getPosition(), lp.getDirection());
-            ladybugs.add(lb);
-            // Grid-Symbol bleibt wie es ist
-        }
+
+        ladybugs.add(ladybug);
+        // No grid manipulation - ladybug exists only in this manager!
     }
 
     /**
      * Gets a ladybug by its ID.
+     *
      * @param id the ladybug ID
      * @return Optional containing the ladybug if found
      * @throws IllegalArgumentException if ID is invalid
@@ -106,6 +134,7 @@ public class LadybugManager {
 
     /**
      * Gets all ladybug IDs sorted.
+     *
      * @return list of sorted IDs
      */
     public List<Integer> listLadybugsIds() {
@@ -119,107 +148,138 @@ public class LadybugManager {
 
     /**
      * Moves a ladybug to an empty position.
+     * <p>
+     * Only updates the ladybug object - no grid manipulation.
+     * </p>
+     *
      * @param ladybug the ladybug to move
      * @param newPosition the target position
      * @param newDirection the new direction
-     * @throws IllegalArgumentException if the ladybug is {@code null}, the position is invalid,
-     *                                  the id already exists, or the target cell is occupied
-     * @throws LadybugException         if updating the grid or ladybug state fails
+     * @throws IllegalArgumentException if the move is invalid
+     * @throws LadybugException if updating the ladybug state fails
      */
-    public void moveLadybugToEmpty(Ladybug ladybug, Position newPosition, Direction newDirection) throws LadybugException {
+    public void moveLadybugToEmpty(Ladybug ladybug, Position newPosition, Direction newDirection)
+            throws LadybugException {
         validateLadybugMove(ladybug, newPosition);
         if (grid.getCell(newPosition) != '.') {
-            throw new IllegalArgumentException("Error, target position occupied");
+            throw new IllegalArgumentException("Error, target position not empty");
         }
         performMove(ladybug, newPosition, newDirection);
     }
 
     /**
-     * Moves a ladybug to a mushroom position (replaces the mushroom).
+     * Moves a ladybug to a mushroom position (conceptually replaces the mushroom).
+     * <p>
+     * The mushroom itself is handled by the board logic, this just moves the ladybug.
+     * </p>
+     *
      * @param ladybug the ladybug to move
      * @param mushroomPos the mushroom position
      * @param newDirection the new direction
      * @throws IllegalArgumentException if move is invalid
-     * @throws LadybugException         if updating the grid or ladybug state fails
+     * @throws LadybugException if updating the ladybug state fails
      */
-    public void moveLadybugToMushroom(Ladybug ladybug, Position mushroomPos, Direction newDirection) throws LadybugException {
+    public void moveLadybugToMushroom(Ladybug ladybug, Position mushroomPos, Direction newDirection)
+            throws LadybugException {
         validateLadybugMove(ladybug, mushroomPos);
-        if (grid.getCell(mushroomPos) != 'o') {
-            throw new IllegalArgumentException("Error, no mushroom to push");
-        }
+        // Note: We don't check for mushroom here since board handles terrain changes
         performMove(ladybug, mushroomPos, newDirection);
     }
 
     /**
-     * Sets the direction of a ladybug and updates the grid.
+     * Sets the direction of a ladybug.
+     * <p>
+     * Only updates the ladybug object - no grid manipulation.
+     * </p>
+     *
      * @param ladybug the ladybug
      * @param newDirection the new direction
-     * @throws LadybugException if updating the grid or ladybug state fails
+     * @throws LadybugException if updating the ladybug state fails
      */
     public void setLadybugDirection(Ladybug ladybug, Direction newDirection) throws LadybugException {
         ladybug.setDirection(newDirection);
-        grid.setCell(ladybug.getPosition(), newDirection.toSymbol());
+        // No grid manipulation - direction changes are purely in-memory!
     }
 
     /**
-     * Gets all ladybug positions from the grid (for tree loading).
-     * This method scans the grid and returns positions where ladybugs are marked,
-     * but does NOT create actual Ladybug objects.
-     * @return list of ladybug positions found in the grid
-     */
-    public List<LadybugPosition> getLadybugPositionsFromGrid() {
-        List<LadybugPosition> ladybugPositions = new ArrayList<>();
-        for (int y = 1; y <= grid.getHeight(); y++) {
-            for (int x = 1; x <= grid.getWidth(); x++) {
-                Position pos = new Position(x, y);
-                char c = grid.getCell(pos);
-
-                if (isLadybugSymbol(c)) {
-                    Direction dir = Direction.fromSymbol(c);
-                    ladybugPositions.add(new LadybugPosition(pos, dir));
-                }
-            }
-        }
-        ladybugPositions.sort(Comparator.comparingInt((LadybugPosition b) -> b.getPosition().y())
-                .thenComparingInt(b -> b.getPosition().x()));
-        return ladybugPositions;
-    }
-
-    /**
-     * Returns a list of all ladybug positions and directions found on the grid.
+     * Gets all ladybug positions from the current active ladybugs.
      * <p>
-     * This is a convenience method that simply delegates to
-     * {@link #getLadybugPositionsFromGrid()}, allowing callers to obtain a
-     * snapshot of the board's ladybug state without activating them in the
-     * manager. The returned list is sorted by row and then column.
+     * This replaces the old method that scanned the grid, since ladybugs
+     * are no longer stored in the grid.
      * </p>
      *
-     * @return list of ladybug positions from the grid
+     * @return list of current ladybug positions
+     */
+    public List<LadybugPosition> getLadybugPositionsFromGrid() {
+        List<LadybugPosition> positions = new ArrayList<>();
+        for (Ladybug ladybug : ladybugs) {
+            positions.add(new LadybugPosition(ladybug.getPosition(), ladybug.getDirection()));
+        }
+
+        // Sort by position for consistency
+        positions.sort(Comparator
+                .comparingInt((LadybugPosition pos) -> pos.getPosition().y())
+                .thenComparingInt(pos -> pos.getPosition().x()));
+
+        return positions;
+    }
+
+    /**
+     * Returns a list of all active ladybug positions and directions.
+     * <p>
+     * This is an alias for {@link #getLadybugPositionsFromGrid()} to maintain
+     * compatibility with existing code.
+     * </p>
+     *
+     * @return list of ladybug positions
      */
     public List<LadybugPosition> getLadybugList() {
         return getLadybugPositionsFromGrid();
     }
 
-
-
-    private boolean isLadybugSymbol(char c) {
-        return c == '^' || c == 'v' || c == '<' || c == '>';
-    }
-
     /**
      * Gets all active ladybug positions sorted by position.
-     * Only returns ladybugs that have been added via addLadybug() (i.e., when trees are loaded).
+     * Only returns ladybugs that are currently managed by this manager.
+     *
      * @return list of active ladybug positions
      */
     public List<LadybugPosition> getActiveLadybugList() {
-        List<LadybugPosition> result = new ArrayList<>();
-        for (Ladybug lb : ladybugs) {
-            result.add(new LadybugPosition(lb.getPosition(), lb.getDirection()));
-        }
-        result.sort(Comparator.comparingInt((LadybugPosition b) -> b.getPosition().y())
-                .thenComparingInt(b -> b.getPosition().x()));
-        return result;
+        return getLadybugPositionsFromGrid(); // Same thing now
     }
+
+    /**
+     * Removes all ladybugs from the manager.
+     * <p>
+     * No grid manipulation needed since ladybugs are not stored in the grid.
+     * </p>
+     */
+    public void clearAllLadybugs() {
+        ladybugs.clear();
+    }
+
+    /**
+     * Creates ladybugs from a registry and adds them to this manager.
+     * <p>
+     * This is the new way to initialize ladybugs, replacing the old
+     * grid-scanning approach.
+     * </p>
+     *
+     * @param registry the registry containing ladybug positions
+     * @throws LadybugException if ladybug creation or addition fails
+     */
+    public void initializeFromRegistry(LadybugPositionRegistry registry) throws LadybugException {
+        clearAllLadybugs(); // Start fresh
+
+        List<LadybugPosition> positions = registry.getPositions();
+        int id = 1;
+
+        for (LadybugPosition position : positions) {
+            Ladybug ladybug = new Ladybug(id++, position.getPosition(), position.getDirection());
+            addLadybug(ladybug);
+        }
+    }
+
+    // === Private helper methods ===
 
     private void validateLadybugMove(Ladybug ladybug, Position newPosition) {
         if (ladybug == null || !ladybugs.contains(ladybug)) {
@@ -230,21 +290,10 @@ public class LadybugManager {
         }
     }
 
-    private void performMove(Ladybug ladybug, Position newPosition, Direction newDirection) throws LadybugException {
-        grid.setCell(ladybug.getPosition(), '.');
+    private void performMove(Ladybug ladybug, Position newPosition, Direction newDirection)
+            throws LadybugException {
         ladybug.setPosition(newPosition);
         ladybug.setDirection(newDirection);
-        grid.setCell(newPosition, newDirection.toSymbol());
-    }
-
-    /**
-     * Removes all ladybugs from the grid and internal list,
-     * resetting their cells to '.'. Intended for re-initialization.
-     */
-    public void clearAllLadybugs() {
-        for (Ladybug ladybug : ladybugs) {
-            grid.setCell(ladybug.getPosition(), '.');
-        }
-        ladybugs.clear();
+        // No grid manipulation - movement is purely in ladybug objects!
     }
 }

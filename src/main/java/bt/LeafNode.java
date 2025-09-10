@@ -62,7 +62,7 @@ public class LeafNode extends BehaviorTreeNode {
      * @return the correct log
      */
     public String getLogNameOrDefault() {
-        if (behavior instanceof bt.LogNameProvider p) {
+        if (behavior instanceof LogNameProvider p) {
             String s = p.logName();
             if (s != null && !s.isEmpty()) {
                 return s;

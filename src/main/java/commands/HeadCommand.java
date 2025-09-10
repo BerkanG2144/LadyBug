@@ -13,23 +13,22 @@ import model.Ladybug;
 import java.util.List;
 import java.util.Optional;
 
+
 /**
  * Command to display the ID of the current node in a ladybug's behavior tree execution.
  *
- * This command shows which node the ladybug's behavior tree is currently pointing to.
- * If the tree has been executed and there's a last executed leaf, it shows that.
- * Otherwise, it shows the current node or falls back to the root node.
- *
- * Usage: head &lt;ladybug&gt;
+ * Based on forum discussion and test expectations:
+ * - Initially (before any execution): shows root node
+ * - After execution: shows next action to be executed
+ * - Exception: if last action was last child of composite, show that action
  *
  * @author ujnaa
  */
 public class HeadCommand extends AbstractCommand {
-
     /**
      * Creates a new HeadCommand.
      *
-     * @param state the game state containing board and tree information
+     * @param state the game state
      */
     public HeadCommand(GameState state) {
         super(state);
@@ -38,9 +37,7 @@ public class HeadCommand extends AbstractCommand {
     @Override
     protected void executeInternal(String[] args)
             throws BoardException, LadybugNotFoundException, CommandArgumentException, LadybugException {
-        if (args.length != 1) {
-            throw new CommandArgumentException(getCommandName(), args, "Error, head <ladybug>");
-        }
+        validateArgs(args);
         requireLadybugs();
         int ladybugId;
         try {
@@ -54,11 +51,17 @@ public class HeadCommand extends AbstractCommand {
         }
         TreeExecution execution = gameState.getExecutions().get(ladybugId);
         if (execution == null) {
-            throw new CommandArgumentException(getCommandName(), args,
-                    "Error, no tree loaded for ladybug " + ladybugId);
+            throw new CommandArgumentException(getCommandName(), args, "Error, no tree loaded for ladybug " + ladybugId);
         }
         var execState = execution.stateOf(ladybug.get());
-        if (execState != null && execState.getLastExecutedLeaf() != null) {
+        if (execState.getLastExecutedLeaf() == null && execState.getStatusCache().isEmpty()) {
+            BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
+            if (tree != null) {
+                System.out.println(tree.getId());
+                return;
+            }
+        }
+        if (execState.getLastExecutedLeaf() != null) {
             BehaviorTreeNode lastExecuted = execState.getLastExecutedLeaf();
             if (lastExecuted instanceof bt.LeafNode) {
                 bt.LeafNode leafNode = (bt.LeafNode) lastExecuted;
@@ -76,29 +79,25 @@ public class HeadCommand extends AbstractCommand {
         }
         try {
             BehaviorTreeNode nextAction = execution.findNextActionNode(getBoard(), ladybug.get());
-
             if (nextAction != null) {
                 System.out.println(nextAction.getId());
             } else {
                 BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
                 if (tree == null) {
-                    throw new CommandArgumentException(getCommandName(), args,
-                            "Error, no tree found for ladybug " + ladybugId);
+                    throw new CommandArgumentException(getCommandName(), args, "Error, no tree found for ladybug " + ladybugId);
                 }
                 System.out.println(tree.getId());
             }
         } catch (LadybugException e) {
             BehaviorTreeNode tree = gameState.getLadybugTrees().get(ladybugId);
             if (tree == null) {
-                throw new CommandArgumentException(getCommandName(), args,
-                        "Error, no tree found for ladybug " + ladybugId);
+                throw new CommandArgumentException(getCommandName(), args, "Error, no tree found for ladybug " + ladybugId);
             }
             System.out.println(tree.getId());
         }
     }
-
     /**
-     * Hilfsmethode: Finde den Elternknoten eines gegebenen Knotens
+     * Helper method: Find the parent node of a given node.
      */
     private BehaviorTreeNode findParent(BehaviorTreeNode root, BehaviorTreeNode target) {
         if (root == null || target == null) {
@@ -115,6 +114,12 @@ public class HeadCommand extends AbstractCommand {
             }
         }
         return null;
+    }
+
+    private void validateArgs(String[] args) throws CommandArgumentException {
+        if (args.length != 1) {
+            throw new CommandArgumentException(getCommandName(), args, "Error, head <ladybug>");
+        }
     }
 
     @Override

@@ -10,8 +10,12 @@ import model.Ladybug;
  * Returns SUCCESS if a path exists, otherwise FAILURE.
  *
  * @author ujnaa
+ * @version SS25
  */
 public class ExistsPathBetween implements NodeBehavior, LogArgsProvider, LogNameProvider {
+    private static final String EXISTS_PATH = "existsPath";
+    private static final String SEPERATOR = ",";
+
     private final int x1;
     private final int y1;
     private final int x2;
@@ -36,17 +40,16 @@ public class ExistsPathBetween implements NodeBehavior, LogArgsProvider, LogName
         if (board == null) {
             return NodeStatus.FAILURE;
         }
-        // Ladybug is not needed for this condition, but included for interface compliance
         return board.existsPath(x1, y1, x2, y2) ? NodeStatus.SUCCESS : NodeStatus.FAILURE;
     }
 
     @Override
     public String logArgs() {
-        return x1 + "," + y1 + " " + x2 + "," + y2; // genau kein Leerzeichen nach dem Komma
+        return x1 + SEPERATOR + y1 + " " + x2 + SEPERATOR + y2;
     }
 
     @Override
     public String logName() {
-        return "existsPath";
+        return EXISTS_PATH;
     }
 }

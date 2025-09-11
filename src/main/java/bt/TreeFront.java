@@ -10,6 +10,7 @@ import model.Ladybug;
  * Returns SUCCESS if a tree is in front, otherwise FAILURE.
  *
  * @author ujnaa
+ * @version SS25
  */
 public class TreeFront implements NodeBehavior {
     @Override

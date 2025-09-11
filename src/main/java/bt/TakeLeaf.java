@@ -11,6 +11,7 @@ import model.Ladybug;
  * otherwise FAILURE.
  *
  * @author ujnaa
+ * @version SS25
  */
 public class TakeLeaf implements NodeBehavior {
     @Override

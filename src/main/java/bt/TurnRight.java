@@ -11,6 +11,7 @@ import model.Ladybug;
  * Always returns SUCCESS.
  *
  * @author ujnaa
+ * @version SS25
  */
 public class TurnRight implements NodeBehavior {
     @Override

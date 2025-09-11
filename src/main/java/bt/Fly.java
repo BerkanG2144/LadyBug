@@ -9,12 +9,11 @@ import model.Position;
  * Behavior tree node that moves a ladybug directly
  * to a specified target position by "flying".
  *
- * Returns SUCCESS if the move is possible,
- * otherwise FAILURE.
- *
  * @author ujnaa
+ * @version SS25
  */
 public class Fly implements NodeBehavior, LogArgsProvider  {
+    private static final String SEPERATOR = ",";
     private final int x;
     private final int y;
 
@@ -40,7 +39,7 @@ public class Fly implements NodeBehavior, LogArgsProvider  {
 
     @Override
     public String logArgs() {
-        return x + "," + y; // genau kein Leerzeichen nach dem Komma
+        return x + SEPERATOR + y; // genau kein Leerzeichen nach dem Komma
     }
 }
 

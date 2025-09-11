@@ -1,13 +1,14 @@
 package bt;
 
 /**
- * Implementieren von Behaviors, die Argumente fürs Log formatiert bereitstellen möchten.
+ * Contract for behaviors that want to provide formatted arguments for logging.
  * @author ujnaa
+ * @version SS25
  * */
 public interface LogArgsProvider {
     /**
-     * Retunr von ka was.
-     * @return z. B. "10,2" oder null/leer, wenn es keine Argumente gibt.
+     * Returns the arguments to append to the log after the leaf name.
+     * @return a formatted argument string
      */
     String logArgs();
 }

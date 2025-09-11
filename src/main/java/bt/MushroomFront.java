@@ -7,9 +7,8 @@ import model.Ladybug;
  * Behavior tree node that checks whether there is a mushroom
  * directly in front of the ladybug.
  *
- * Returns SUCCESS if a mushroom is in front, otherwise FAILURE.
- *
  * @author ujnaa
+ * @version SS25
  */
 public class MushroomFront implements NodeBehavior {
     @Override

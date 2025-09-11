@@ -8,6 +8,8 @@ import exceptions.LadybugNotFoundException;
 import main.GameState;
 import model.Ladybug;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,8 +44,8 @@ public class NextActionCommand extends AbstractCommand {
 
         requireLadybugs();
 
-        List<Integer> ladybugIds = new java.util.ArrayList<>(getBoard().listLadybugsIds());
-        java.util.Collections.sort(ladybugIds); // IDs deterministisch aufsteigend
+        List<Integer> ladybugIds = new ArrayList<>(getBoard().listLadybugsIds());
+        Collections.sort(ladybugIds); // IDs deterministisch aufsteigend
 
         for (int ladybugId : ladybugIds) {
             TreeExecution execution = gameState.getExecutions().get(ladybugId);

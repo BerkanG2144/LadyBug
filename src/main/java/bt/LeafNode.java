@@ -6,20 +6,11 @@ import model.Ladybug;
 
 /**
  * Behavior tree node representing a leaf.
- * A leaf node wraps a {@link NodeBehavior} and can either
- * be an action or a condition, defined by {@link LeafKind}.
- *
- * Returns SUCCESS or FAILURE depending on the wrapped behavior.
- *
  * @author ujnaa
+ * @version SS25
  */
 public class LeafNode extends BehaviorTreeNode {
-
-    /**
-     * Defines the type of leaf node: either an action or a condition.
-     */
-    public enum LeafKind { ACTION, CONDITION }
-
+    private static final String LEAF_NODE_TYPE = "leaf";
     private final NodeBehavior behavior;
     private final LeafKind kind;
 
@@ -50,9 +41,9 @@ public class LeafNode extends BehaviorTreeNode {
      * @return the correct log
      */
     public String getLogArgsOrEmpty() {
-        if (behavior instanceof LogArgsProvider p) {
-            String s = p.logArgs();
-            return (s != null && !s.isEmpty()) ? " " + s : "";
+        if (behavior instanceof LogArgsProvider provider) {
+            String logName = provider.logArgs();
+            return (logName != null && !logName.isEmpty()) ? " " + logName : "";
         }
         return "";
     }
@@ -62,13 +53,12 @@ public class LeafNode extends BehaviorTreeNode {
      * @return the correct log
      */
     public String getLogNameOrDefault() {
-        if (behavior instanceof LogNameProvider p) {
-            String s = p.logName();
-            if (s != null && !s.isEmpty()) {
-                return s;
+        if (behavior instanceof LogNameProvider provider) {
+            String logName = provider.logName();
+            if (logName != null && !logName.isEmpty()) {
+                return logName;
             }
         }
-        // Fallback wie bisher (SimpleClassName → camelCase)
         String className = behavior.getClass().getSimpleName();
         return className.isEmpty() ? className
                 : Character.toLowerCase(className.charAt(0)) + className.substring(1);
@@ -81,16 +71,7 @@ public class LeafNode extends BehaviorTreeNode {
 
     @Override
     public String getType() {
-        return "leaf";
-    }
-
-    /**
-     * Returns the kind of this leaf (ACTION or CONDITION).
-     *
-     * @return the leaf kind
-     */
-    public LeafKind getKind() {
-        return kind;
+        return LEAF_NODE_TYPE;
     }
 
     /**
@@ -119,6 +100,4 @@ public class LeafNode extends BehaviorTreeNode {
     public boolean isCondition() {
         return kind == LeafKind.CONDITION;
     }
-
-
 }

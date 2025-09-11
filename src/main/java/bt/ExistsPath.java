@@ -10,8 +10,11 @@ import model.Ladybug;
  * Returns SUCCESS if a path exists, otherwise FAILURE.
  *
  * @author ujnaa
+ * @version SS25
  */
 public class ExistsPath implements NodeBehavior, LogArgsProvider, LogNameProvider {
+    private static final String SEPERATOR = ",";
+    private static final String EXISTS_PATH = "existsPath";
     private final int x;
     private final int y;
 
@@ -35,11 +38,11 @@ public class ExistsPath implements NodeBehavior, LogArgsProvider, LogNameProvide
 
     @Override
     public String logArgs() {
-        return x + "," + y;
+        return x + SEPERATOR + y;
     }
 
     @Override
     public String logName() {
-        return "existsPath";
+        return EXISTS_PATH;
     }
 }

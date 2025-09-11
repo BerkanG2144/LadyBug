@@ -7,10 +7,8 @@ import model.Ladybug;
 /**
  * Behavior tree node that moves the ladybug one step forward
  * in its current direction if possible.
- *
- * Returns SUCCESS if the move is valid, otherwise FAILURE.
- *
  * @author ujnaa
+ * @version SS25
  */
 public class Move implements NodeBehavior {
     @Override

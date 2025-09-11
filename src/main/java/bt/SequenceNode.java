@@ -12,8 +12,10 @@ import model.Ladybug;
  * otherwise SUCCESS if all children succeed.
  *
  * @author ujnaa
+ * @version SS25
  */
 public class SequenceNode extends BehaviorTreeNode implements CompositeNode {
+    private static final String SEQUENCE_NODE_TYPE = "sequence";
 
     /**
      * Constructs a sequence node with the given identifier.
@@ -26,7 +28,7 @@ public class SequenceNode extends BehaviorTreeNode implements CompositeNode {
 
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException {
-        for (BehaviorTreeNode child : children) {
+        for (BehaviorTreeNode child : childrenView()) {
             NodeStatus childStatus = child.tick(board, ladybug);
             if (childStatus == NodeStatus.FAILURE) {
                 return NodeStatus.FAILURE;
@@ -37,11 +39,11 @@ public class SequenceNode extends BehaviorTreeNode implements CompositeNode {
 
     @Override
     public String getType() {
-        return "sequence";
+        return SEQUENCE_NODE_TYPE;
     }
 
     @Override
     public void addChild(int index, BehaviorTreeNode child) {
-        children.add(index, child);
+        insertChild(index, child);
     }
 }

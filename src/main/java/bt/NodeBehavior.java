@@ -10,6 +10,7 @@ import model.Ladybug;
  * its logic on a given board and ladybug.
  *
  * @author ujnaa
+ * @version SS25
  */
 public interface NodeBehavior {
     /**

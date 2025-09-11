@@ -4,52 +4,46 @@ import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
-import java.util.List;
-
 /**
  * Behavior tree node of type "parallel".
  * Executes all its child nodes and counts how many succeed.
- * <p>
- * Returns SUCCESS if the number of successful children is at least
- * the configured threshold, otherwise FAILURE.
- *
  * @author ujnaa
+ * @version SS25
  */
 public class ParallelNode extends BehaviorTreeNode implements CompositeNode {
+    private static final String PARALLEL_NODE_TYPE = "parallel";
     private final int requiredSuccesses;
 
     /**
-     * Constructs a parallel node with the given identifier and
-     * required number of successes.
-     *
-     * @param id                the identifier of this node
-     * @param requiredSuccesses the minimum number of children that must succeed
+     * Creates a parallel node with the given identifier and success threshold.
+     * @param id the unique identifier of this node (non-null)
+     * @param requiredSuccesses the minimum number of child successes required; must be {@code > 0}
+     * @throws IllegalArgumentException if {@code requiredSuccesses <= 0}
+     * @throws NullPointerException if {@code id} is {@code null}
      */
     public ParallelNode(String id, int requiredSuccesses) {
         super(id);
+        if (requiredSuccesses <= 0) {
+            throw new IllegalArgumentException("requiredSuccesses must be > 0");
+        }
         this.requiredSuccesses = requiredSuccesses;
     }
 
     @Override
     public void addChild(BehaviorTreeNode child) {
-        children.add(child);
+        super.addChild(child);
     }
 
-    /**
-     * Returns the list of child nodes.
-     *
-     * @return list of child nodes
-     */
-    public List<BehaviorTreeNode> getChildren() {
-        return children;
+    @Override
+    public void addChild(int index, BehaviorTreeNode child) {
+        insertChild(index, child);
     }
 
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException {
         int successCount = 0;
-        for (BehaviorTreeNode child : children) {
-            NodeStatus childStatus = child.tick(board, ladybug);
-            if (childStatus == NodeStatus.SUCCESS) {
+        for (BehaviorTreeNode child : childrenView()) {
+            if (child.tick(board, ladybug) == NodeStatus.SUCCESS) {
                 successCount++;
             }
         }
@@ -58,18 +52,12 @@ public class ParallelNode extends BehaviorTreeNode implements CompositeNode {
 
     @Override
     public String getType() {
-        return "parallel";
-    }
-
-    @Override
-    public void addChild(int index, BehaviorTreeNode child) {
-        children.add(index, child);
+        return PARALLEL_NODE_TYPE;
     }
 
     /**
-     * Returns the required number of child successes.
-     *
-     * @return the success threshold
+     * Required success for the parallel node.
+     * @return the success that is required
      */
     public int getRequiredSuccesses() {
         return requiredSuccesses;

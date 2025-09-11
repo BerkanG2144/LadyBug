@@ -1,13 +1,14 @@
 package bt;
 
 /**
- * Providing the name.
+ * Contract for behaviors that want to provide a custom log name.
  * @author ujnaa
+ * @version SS25
  */
 public interface LogNameProvider {
     /**
-     * the log name.
-     * @return the log name
+     * Returns the custom name to use in log output.
+     * @return a non-blank name for logging
      * */
     String logName();
 }

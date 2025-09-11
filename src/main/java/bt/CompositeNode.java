@@ -9,6 +9,7 @@ import java.util.List;
  * Provides methods to add and retrieve children.
  *
  * @author ujnaa
+ * @version SS25
  */
 public interface CompositeNode {
     /**

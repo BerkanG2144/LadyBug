@@ -4,18 +4,15 @@ import exceptions.LadybugException;
 import model.Board;
 import model.Ladybug;
 
-import java.util.List;
 
 /**
  * Behavior tree node of type "fallback".
- * It executes its child nodes in order until one succeeds.
- * <p>
- * Returns SUCCESS as soon as one child returns SUCCESS,
- * otherwise FAILURE if all children fail.
  *
  * @author ujnaa
+ * @version SS25
  */
 public class FallbackNode extends BehaviorTreeNode implements CompositeNode {
+    private static final String FALLBACK_DESCRIPTION = "fallback";
     /**
      * Constructs a fallback node with the given identifier.
      *
@@ -27,21 +24,12 @@ public class FallbackNode extends BehaviorTreeNode implements CompositeNode {
 
     @Override
     public void addChild(BehaviorTreeNode child) {
-        children.add(child);
-    }
-
-    /**
-     * Returns the list of children of this fallback node.
-     *
-     * @return list of child nodes
-     */
-    public List<BehaviorTreeNode> getChildren() {
-        return children;
+        super.addChild(child);
     }
 
     @Override
     public NodeStatus tick(Board board, Ladybug ladybug) throws LadybugException {
-        for (BehaviorTreeNode child : children) {
+        for (BehaviorTreeNode child : childrenView()) {
             NodeStatus childStatus = child.tick(board, ladybug);
             if (childStatus == NodeStatus.SUCCESS) {
                 return NodeStatus.SUCCESS;
@@ -52,11 +40,11 @@ public class FallbackNode extends BehaviorTreeNode implements CompositeNode {
 
     @Override
     public String getType() {
-        return "fallback";
+        return FALLBACK_DESCRIPTION;
     }
 
     @Override
     public void addChild(int index, BehaviorTreeNode child) {
-        children.add(index, child);
+        insertChild(index, child);
     }
 }

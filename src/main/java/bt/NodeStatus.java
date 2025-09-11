@@ -7,6 +7,7 @@ package bt;
  * FAILURE  – the node failed to execute successfully.
  *
  * @author ujnaa
+ * @version SS25
  */
 public enum NodeStatus {
     /**
